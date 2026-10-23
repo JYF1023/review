@@ -60,7 +60,7 @@ App 會偵測自己是不是從主畫面開啟；在 Safari 分頁裡開時，�
 ## 更新 App（修改程式之後）
 
 1. 修改 `index.html`。
-2. 把 `sw.js` 裡的 `CACHE = 'kaodian-v3'` 版本號加一（例如改成 `kaodian-v4`），確保手機會拿到新版。
+2. 把 `sw.js` 裡的 `CACHE = 'kaodian-v4'` 版本號加一（例如改成 `kaodian-v5`），確保手機會拿到新版。
 3. 部署到**同一個網站**：
    - Netlify：進入該網站 → Deploys → 把整個資料夾拖到頁面上的上傳區。
    - GitHub Pages：commit 並 push 到同一個 repo；或在網頁上 Add file → Upload files，上傳同名檔案就會覆蓋。

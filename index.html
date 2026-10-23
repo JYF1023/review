@@ -42,6 +42,7 @@ p{margin:6px 0}
 .small{font-size:13px}
 .lede{color:var(--ink2);font-size:15px}
 .empty{color:var(--ink2);padding:18px 0}
+.empty .btn{margin-top:10px}
 .center{text-align:center}
 .hint{font-size:14px;color:var(--ink2);min-height:0}
 .hint.err{color:var(--pen)}
@@ -255,7 +256,7 @@ body.typing #tabs{display:none}
    單一檔案、無外部相依。資料存在瀏覽器的 IndexedDB。
    結構說明見 README.md。
    ============================================================ */
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.1';
 
 const SUBJECTS = [
   { id:'ds',   name:'資料結構',   short:'資結', aliases:['資結','ds','datastructure','datastructures'] },
@@ -857,20 +858,35 @@ function renderSubject(sid) {
   <div class="row"><button type="button" class="btn" data-act="chapter-add" data-sid="${sid}">新增章節</button></div>`;
 }
 const PF = { status: 'all', sid: '', school: '' };
+function resetFilters() { PF.status = 'all'; PF.sid = ''; PF.school = ''; }
+const PF_STATUS_LABEL = { wrong: '不會', unsure: '不確定', ok: '會', nophoto: '缺照片' };
 function renderProblems() {
+  if (!S.problems.length) {
+    resetFilters();
+    app.innerHTML = `<h1>瀏覽</h1>${browseSeg('list')}<p class="empty">還沒有任何題目。做完一回考古題，用「新增」把題目匯進來。</p><a class="btn primary" href="#/add">去新增</a>`;
+    return;
+  }
   const schools = [...new Set(S.problems.map(p => sourceSchool(p.source)).filter(Boolean))].sort();
+  // 篩選的出處已經不存在（題目被刪掉或改了出處）：自動清除，避免畫面顯示「所有出處」卻仍在篩選
+  if (PF.school && !schools.includes(PF.school)) PF.school = '';
   let ps = S.problems.slice();
   if (PF.status === 'nophoto') ps = ps.filter(missingPhoto);
   else if (PF.status !== 'all') ps = ps.filter(p => statusOf(p) === PF.status);
-  if (PF.sid) ps = ps.filter(p => p.conceptIds.some(id => CO[id] && subjectOfConcept(CO[id]) === PF.sid));
+  if (PF.sid) ps = ps.filter(p => inSubject(p, PF.sid));
   if (PF.school) ps = ps.filter(p => sourceSchool(p.source) === PF.school);
   ps.sort((a, b) => b.createdAt - a.createdAt);
+  let empty = '';
+  if (!ps.length) {
+    const parts = [PF_STATUS_LABEL[PF.status], PF.sid && SUBJ[PF.sid].name, PF.school].filter(Boolean);
+    const onlySubject = PF.sid && PF.status === 'all' && !PF.school;
+    empty = `<div class="empty"><p>${onlySubject ? `${SUBJ[PF.sid].name}還沒有題目。` : `沒有符合「${esc(parts.join('＋'))}」的題目。`}</p><button type="button" class="btn" data-act="pf-clear">清除篩選</button></div>`;
+  }
   app.innerHTML = `<h1>瀏覽</h1>${browseSeg('list')}
   <div class="chips">${[['all','全部'],['wrong','不會'],['unsure','不確定'],['ok','會'],['nophoto','缺照片']].map(([v, l]) => `<button type="button" class="chip ${PF.status === v ? 'on' : ''}" data-act="pf-status" data-v="${v}">${l}</button>`).join('')}</div>
   <div class="row2"><select id="pf-sid" aria-label="科目"><option value="">所有科目</option>${SUBJECTS.map(s => `<option value="${s.id}" ${PF.sid === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}</select>
-  <select id="pf-school" aria-label="出處"><option value="">所有出處</option>${schools.map(x => `<option ${PF.school === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>
+  <select id="pf-school" aria-label="出處"><option value="">所有出處</option>${schools.map(x => `<option value="${esc(x)}" ${PF.school === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>
   <p class="muted small" style="margin-top:12px">${ps.length} 題</p>
-  <div class="list">${ps.map(p => problemRow(p)).join('') || '<p class="empty">沒有符合條件的題目。</p>'}</div>`;
+  ${empty || `<div class="list">${ps.map(p => problemRow(p)).join('')}</div>`}`;
   $('#pf-sid').onchange = e => { PF.sid = e.target.value; render(); };
   $('#pf-school').onchange = e => { PF.school = e.target.value; render(); };
 }
@@ -1518,7 +1534,7 @@ async function restoreFrom(file) {
     await dbPut('meta', { key: 'seeded', value: true });
     await dbPut('meta', { key: 'lastBackupAt', value: Date.parse(data.exportedAt) || now() });
     urlCache.forEach(u => URL.revokeObjectURL(u)); urlCache.clear();
-    await loadAll(); A = newDraft(); B = newBatch(); BK = null;
+    await loadAll(); A = newDraft(); B = newBatch(); BK = null; resetFilters();
     requestPersist();
     alert(`已還原 ${data.problems.length} 題。${missing ? `\n有 ${missing} 張照片在備份檔裡找不到。` : ''}`);
     currentRoute = null; go('#/');
@@ -1602,6 +1618,7 @@ const ACT = {
   'discard-add': async () => { if (!confirm('清空這一題目前填的所有內容？')) return; A = newDraft(); await dbDel('meta', 'draft').catch(() => {}); renderAdd(); },
 
   'pf-status': (d) => { PF.status = d.v; render(); },
+  'pf-clear': () => { resetFilters(); render(); },
   'chapter-add': async (d) => { const n = prompt('新章節的名稱'); if (n && n.trim()) { await createChapter(d.sid, n.trim()); render(); toast('已新增章節'); } },
   'chapter-rename': async (d) => { const ch = CH[d.id]; const n = prompt('章節名稱', ch.name); if (n && n.trim() && n.trim() !== ch.name) { ch.name = n.trim(); await dbPut('chapters', ch); render(); } },
   'chapter-delete': async (d) => { const ch = CH[d.id]; if (conceptsOfChapter(ch.id).length) return; if (!confirm(`刪除章節「${ch.name}」？`)) return; S.chapters = S.chapters.filter(x => x.id !== ch.id); await dbDel('chapters', ch.id); reindex(); render(); },
@@ -1720,7 +1737,7 @@ const ACT = {
   'wipe': async () => {
     const v = prompt('這會刪除所有筆記和照片，而且無法復原。\n確定的話，請輸入「清除」兩個字。');
     if (v !== '清除') return;
-    await dbClearAll(); urlCache.clear(); await loadAll(); A = newDraft(); B = newBatch(); toast('已清除所有資料'); go('#/');
+    await dbClearAll(); urlCache.clear(); await loadAll(); A = newDraft(); B = newBatch(); resetFilters(); toast('已清除所有資料'); go('#/');
   },
 };
 
@@ -1800,8 +1817,20 @@ document.addEventListener('click', async e => {
   e.preventDefault();
   try { await fn(el.dataset, el, e); } catch (err) { console.error(err); alert('發生錯誤：' + (err && err.message || err)); }
 });
-document.addEventListener('focusin', e => { if (e.target.matches('input:not([type=file]),textarea,select')) document.body.classList.add('typing'); });
-document.addEventListener('focusout', () => setTimeout(() => { if (!document.activeElement || !document.activeElement.matches('input:not([type=file]),textarea,select')) document.body.classList.remove('typing'); }, 50));
+// 有文字框在輸入時隱藏下方導覽列（避免被 iPhone 鍵盤頂上來擋住輸入框）。
+// 下拉選單不算，因為不會叫出鍵盤。
+// 狀態一律從「目前焦點是不是畫面上的文字框」重新判斷：Firefox 和 iPhone Safari 在焦點元素被移除時不會發 focusout，
+// 所以除了 focus 事件，畫面有任何變動時也重新確認一次，導覽列不會卡在隱藏狀態。
+const TEXT_ENTRY = 'textarea,input:not([type=file]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit])';
+function syncTyping() {
+  const a = document.activeElement;
+  document.body.classList.toggle('typing', !!(a && a !== document.body && a.isConnected && a.matches(TEXT_ENTRY)));
+}
+let typingFrame = 0;
+const scheduleTyping = () => { cancelAnimationFrame(typingFrame); typingFrame = requestAnimationFrame(syncTyping); };
+document.addEventListener('focusin', scheduleTyping);
+document.addEventListener('focusout', () => setTimeout(syncTyping, 50));
+new MutationObserver(scheduleTyping).observe(document.body, { childList: true, subtree: true });
 
 async function init() {
   try {
