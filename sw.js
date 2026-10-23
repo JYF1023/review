@@ -1,7 +1,7 @@
 // 考點筆記 — 離線支援
 // 只快取 App 本身的檔案（不碰筆記資料，筆記存在 IndexedDB）。
 // 更新 App 時：把 CACHE 的版本號加一，重新部署即可。
-const CACHE = 'kaodian-v2';
+const CACHE = 'kaodian-v3';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

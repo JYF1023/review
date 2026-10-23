@@ -60,7 +60,7 @@ App 會偵測自己是不是從主畫面開啟；在 Safari 分頁裡開時，�
 ## 更新 App（修改程式之後）
 
 1. 修改 `index.html`。
-2. 把 `sw.js` 裡的 `CACHE = 'kaodian-v2'` 版本號加一（例如改成 `kaodian-v3`），確保手機會拿到新版。
+2. 把 `sw.js` 裡的 `CACHE = 'kaodian-v3'` 版本號加一（例如改成 `kaodian-v4`），確保手機會拿到新版。
 3. 部署到**同一個網站**：
    - Netlify：進入該網站 → Deploys → 把整個資料夾拖到頁面上的上傳區。
    - GitHub Pages：commit 並 push 到同一個 repo；或在網頁上 Add file → Upload files，上傳同名檔案就會覆蓋。
@@ -191,7 +191,8 @@ photos/<id>.jpg  // 題目照片，檔名對應 problems[].photoIds
 | 回覆解析 | `parseBatch()`／`parseBatchItem()`、`parseReply()` |
 | 批次確認畫面 | `renderBatch()`、`saveBatchItem()` |
 | 圖的顯示 | `richText()` 與 CSS `.fig` |
-| 複習排序規則 | `problemScore()`（不會權重 3、不確定 2、會 0.5，乘上距離上次作答的天數因子）、`reviewPool()`（20 小時內做過的題目不排入） |
+| 複習排序規則 | `problemScore()`（不會權重 3、不確定 2、會 0.5，乘上距離上次作答的天數因子）、`reviewPool()`（20 小時內做過的題目不排入）、`todayPool()`（今天新增或做過的題目，依不會→不確定→會）、`allPool()`（不看時間，全部依 `problemScore` 排序） |
+| 滑動刪除 | CSS `.swipe`、JS 的 `swipe to delete` 區塊（pointer events，`touch-action: pan-y` 讓上下捲動照常運作）、`deleteProblemWithUndo()`／`undoDelete()`（刪除後 5 秒內可復原） |
 | 錯因的最低要求 | `attemptProblems()` 與 `TRIVIAL` |
 | 自動建議既有考點的門檻 | `makeCard()` 裡的 `0.72` |
 | 顏色 | CSS 開頭的 `:root` 變數，科目色是 `--s-ds` 等 |

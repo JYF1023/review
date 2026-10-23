@@ -107,6 +107,14 @@ input::placeholder,textarea::placeholder{color:var(--ink3)}
 .crow-name{font-weight:600;font-size:16px;line-height:1.35}
 .crow-path,.crow-why{font-size:13px;color:var(--ink2);line-height:1.4}
 .crow-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:13px;color:var(--ink2);flex:none;text-align:right}
+.swipe{position:relative;border-radius:8px;overflow:hidden;touch-action:pan-y}
+.swipe-del{position:absolute;top:0;right:0;bottom:0;width:88px;border:0;background:var(--pen);color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer;visibility:hidden}
+.swipe.open .swipe-del,.swipe.dragging .swipe-del{visibility:visible}
+.swipe > .prow{position:relative;z-index:1;transition:transform .2s ease;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none}
+.swipe.dragging > .prow{transition:none}
+#undo{position:fixed;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);transform:translateX(-50%);z-index:61;display:none;align-items:center;gap:14px;background:var(--ink);color:var(--paper);padding:6px 6px 6px 16px;border-radius:12px;font-size:15px;max-width:92vw}
+#undo.show{display:flex}
+#undo button{appearance:none;border:0;background:transparent;color:var(--paper);font:inherit;font-weight:700;text-decoration:underline;padding:8px 10px;min-height:40px;cursor:pointer}
 .prow{display:flex;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px;text-decoration:none;color:var(--ink)}
 .thumb{width:62px;height:62px;flex:none;border-radius:6px;object-fit:cover;background:var(--soft);border:1px solid var(--line)}
 .thumb.empty{display:grid;place-items:center;color:var(--ink3);font-size:20px}
@@ -238,6 +246,7 @@ body.typing #tabs{display:none}
 </nav>
 <div id="sheet-root"></div>
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="undo" role="status" aria-live="polite"><span id="undo-msg"></span><button type="button" data-act="undo-delete">復原</button></div>
 <div id="viewer"><button type="button" data-act="viewer-close">關閉</button><img alt="題目照片"></div>
 <script>
 'use strict';
@@ -246,7 +255,7 @@ body.typing #tabs{display:none}
    單一檔案、無外部相依。資料存在瀏覽器的 IndexedDB。
    結構說明見 README.md。
    ============================================================ */
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 
 const SUBJECTS = [
   { id:'ds',   name:'資料結構',   short:'資結', aliases:['資結','ds','datastructure','datastructures'] },
@@ -699,7 +708,7 @@ function conceptRow(c, why) {
 function problemRow(p, excludeConcept) {
   const st = statusOf(p), l = latest(p);
   const cs = p.conceptIds.filter(id => id !== excludeConcept).map(id => CO[id]).filter(Boolean);
-  return `<a class="prow" href="#/problem/${p.id}">${p.photoIds[0] ? `<img class="thumb" data-photo="${p.photoIds[0]}" alt="">` : `<span class="thumb empty">文</span>`}<span class="prow-main"><span class="prow-top"><span class="badge ${st}">${STATUS[st].label}</span>${p.source ? `<span class="muted small">${esc(p.source)}</span>` : ''}${missingPhoto(p) ? `<span class="t-unsure small">缺照片</span>` : ''}</span>${cs.length ? `<span class="prow-concepts">${excludeConcept ? '也考：' : ''}${cs.map(c => esc(c.name)).join('、')}</span>` : ''}${l && l.reason ? `<span class="prow-reason">${esc(l.reason)}</span>` : (p.text ? `<span class="prow-text">${esc(plainSnippet(p.text))}</span>` : '')}</span></a>`;
+  return `<div class="swipe" data-pid="${p.id}"><button type="button" class="swipe-del" data-act="swipe-delete" data-id="${p.id}" tabindex="-1">刪除</button><a class="prow" href="#/problem/${p.id}" draggable="false">${p.photoIds[0] ? `<img class="thumb" data-photo="${p.photoIds[0]}" alt="" draggable="false">` : `<span class="thumb empty">文</span>`}<span class="prow-main"><span class="prow-top"><span class="badge ${st}">${STATUS[st].label}</span>${p.source ? `<span class="muted small">${esc(p.source)}</span>` : ''}${missingPhoto(p) ? `<span class="t-unsure small">缺照片</span>` : ''}</span>${cs.length ? `<span class="prow-concepts">${excludeConcept ? '也考：' : ''}${cs.map(c => esc(c.name)).join('、')}</span>` : ''}${l && l.reason ? `<span class="prow-reason">${esc(l.reason)}</span>` : (p.text ? `<span class="prow-text">${esc(plainSnippet(p.text))}</span>` : '')}</span></a></div>`;
 }
 function conceptPills(p) {
   return `<div class="pconcepts">${p.conceptIds.map(id => CO[id]).filter(Boolean).map(c => { const { s } = conceptPath(c); return `<a class="cpill" href="#/concept/${c.id}" style="--sc:var(--s-${s.id})"><span>${s.short}</span>${esc(c.name)}</a>`; }).join('')}</div>`;
@@ -1278,12 +1287,19 @@ function problemScore(p) {
   const days = (now() - lastTouched(p)) / DAY;
   return (w + 0.5 * Math.max(0, wrongs - 1)) * (1 + Math.min(days, 30) / 7);
 }
+const inSubject = (p, sid) => !sid || p.conceptIds.some(id => CO[id] && subjectOfConcept(CO[id]) === sid);
 function reviewPool(sid) {
   const fresh = now() - 20 * 3600 * 1000;
-  let ps = S.problems.filter(p => lastTouched(p) < fresh);
-  if (sid) ps = ps.filter(p => p.conceptIds.some(id => CO[id] && subjectOfConcept(CO[id]) === sid));
-  return ps.sort((a, b) => problemScore(b) - problemScore(a));
+  return S.problems.filter(p => lastTouched(p) < fresh && inSubject(p, sid)).sort((a, b) => problemScore(b) - problemScore(a));
 }
+const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
+// 今天新增或今天做過的題目：不會 → 不確定 → 會
+function todayPool(sid) {
+  const t0 = startOfToday(), rank = { wrong: 0, unsure: 1, ok: 2 };
+  return S.problems.filter(p => lastTouched(p) >= t0 && inSubject(p, sid))
+    .sort((a, b) => rank[statusOf(a)] - rank[statusOf(b)] || a.createdAt - b.createdAt);
+}
+const allPool = sid => S.problems.filter(p => inSubject(p, sid)).sort((a, b) => problemScore(b) - problemScore(a));
 let RV = { sid: '' };
 let R = null;
 function startSession(ids, label) { R = { ids, i: 0, revealed: false, st: { status: null, errorTypes: [], reason: '' }, tally: { ok: 0, unsure: 0, wrong: 0 }, label }; currentRoute = null; go('#/session'); }
@@ -1292,11 +1308,15 @@ function renderReview() {
   const byC = new Map();
   pool.forEach(p => p.conceptIds.forEach(id => { if (!CO[id]) return; if (RV.sid && subjectOfConcept(CO[id]) !== RV.sid) return; const e = byC.get(id) || { score: 0, ps: [] }; e.score += problemScore(p); e.ps.push(p); byC.set(id, e); }));
   const top = [...byC.entries()].sort((a, b) => b[1].score - a[1].score).slice(0, 12);
+  const today = todayPool(RV.sid), allN = allPool(RV.sid).length;
+  const tw = today.filter(p => statusOf(p) === 'wrong').length, tu = today.filter(p => statusOf(p) === 'unsure').length;
   const why = (c, e) => { const w = e.ps.filter(p => statusOf(p) === 'wrong').length, u = e.ps.filter(p => statusOf(p) === 'unsure').length; const last = Math.max(c.lastReviewedAt || 0, ...e.ps.map(lastTouched)); return [w ? `${w} 題不會` : '', u ? `${u} 題不確定` : '', `上次做：${daysAgo(last)}`].filter(Boolean).join('，'); };
   app.innerHTML = `<h1>複習</h1>
-  <p class="lede">${pool.length ? `有 ${pool.length} 題可以複習。錯越多、越久沒看的排越前面。` : S.problems.length ? '目前沒有要複習的題目。今天剛記錄或剛複習過的題目，明天才會排進來。' : '還沒有題目可以複習。'}</p>
+  <p class="lede">${pool.length ? `有 ${pool.length} 題可以複習。錯越多、越久沒看的排越前面。` : S.problems.length ? '目前沒有到期要複習的題目。今天剛記錄或剛複習過的題目，明天才會自動排進來。' : '還沒有題目可以複習。'}</p>
   <div class="chips">${[['', '全部'], ...SUBJECTS.map(s => [s.id, s.name])].map(([v, l]) => `<button type="button" class="chip ${RV.sid === v ? 'on' : ''}" data-act="rv-sid" data-v="${v}">${l}</button>`).join('')}</div>
   ${pool.length ? `<button type="button" class="btn primary big" data-act="rv-start" data-n="10">開始複習 ${Math.min(10, pool.length)} 題</button>${pool.length > 10 ? `<div class="row"><button type="button" class="btn ghost" data-act="rv-start" data-n="${pool.length}">全部 ${pool.length} 題一起複習</button></div>` : ''}` : ''}
+  ${!pool.length && allN ? `<button type="button" class="btn primary big" data-act="rv-all">不管時間，照錯誤多寡全部複習（${allN} 題）</button>` : ''}
+  ${today.length ? `<div class="panel"><h2>今天的題目</h2><p class="small muted">今天新增或做過 ${today.length} 題${tw + tu ? `，其中 ${tw} 題不會、${tu} 題不確定` : ''}。睡前再看一遍，不會的排最前面。</p><button type="button" class="btn big" data-act="rv-today">複習今天的 ${today.length} 題</button></div>` : ''}
   ${top.length ? `<h2>最該複習的考點</h2><div class="list">${top.map(([id, e]) => conceptRow(CO[id], why(CO[id], e))).join('')}</div>` : ''}`;
 }
 function renderSession() {
@@ -1682,6 +1702,8 @@ const ACT = {
   },
 
   'rv-sid': (d) => { RV.sid = d.v; render(); },
+  'rv-today': () => { const ps = todayPool(RV.sid); startSession(ps.map(p => p.id), `今天的題目${RV.sid ? '・' + SUBJ[RV.sid].name : ''}`); },
+  'rv-all': () => { const ps = allPool(RV.sid); startSession(ps.map(p => p.id), RV.sid ? SUBJ[RV.sid].name : '全部科目'); },
   'rv-start': (d) => { const pool = reviewPool(RV.sid).slice(0, +d.n); const l = RV.sid ? SUBJ[RV.sid].name : '全部科目'; startSession(pool.map(p => p.id), l); },
   'sess-reveal': () => { R.revealed = true; renderSession(); hydratePhotos(app); },
   'sess-next': async () => {
@@ -1702,7 +1724,75 @@ const ACT = {
   },
 };
 
+/* ---------- swipe to delete (problem rows) ---------- */
+const DEL_W = 88;
+let SW = null, openRow = null;
+function setSwipe(row, open) {
+  row.classList.toggle('open', open);
+  const a = row.querySelector('.prow'); if (a) a.style.transform = open ? `translateX(-${DEL_W}px)` : '';
+  if (open) openRow = row; else if (openRow === row) openRow = null;
+}
+function closeSwipes(except) { $$('.swipe.open').forEach(r => { if (r !== except) setSwipe(r, false); }); }
+document.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const row = e.target.closest('.swipe');
+  if (!e.target.closest('.swipe-del')) closeSwipes(row);
+  if (!row || e.target.closest('.swipe-del')) return;
+  SW = { row, id: e.pointerId, x: e.clientX, y: e.clientY, base: row.classList.contains('open') ? -DEL_W : 0, dx: 0, mode: null };
+});
+document.addEventListener('pointermove', e => {
+  if (!SW || e.pointerId !== SW.id) return;
+  const dx = e.clientX - SW.x, dy = e.clientY - SW.y;
+  if (!SW.mode) {
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+    SW.mode = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+    if (SW.mode === 'v') { SW = null; return; }
+    SW.row.classList.add('dragging');
+    try { SW.row.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+  SW.dx = dx;
+  const x = Math.min(0, Math.max(-DEL_W - 36, SW.base + dx));
+  SW.row.querySelector('.prow').style.transform = `translateX(${x}px)`;
+});
+function endSwipe(e) {
+  if (!SW || e.pointerId !== SW.id) return;
+  const s = SW; SW = null;
+  if (s.mode !== 'h') return;
+  s.row.classList.remove('dragging');
+  setSwipe(s.row, s.base + s.dx < -DEL_W / 2);
+  s.row._swipedAt = Date.now();
+}
+document.addEventListener('pointerup', endSwipe);
+document.addEventListener('pointercancel', endSwipe);
+
+let pendingDelete = null;
+function showUndo(msg) { $('#undo-msg').textContent = msg; $('#undo').classList.add('show'); }
+function hideUndo() { $('#undo').classList.remove('show'); }
+async function deleteProblemWithUndo(id) {
+  const p = PR[id]; if (!p) return;
+  if (pendingDelete) { clearTimeout(pendingDelete.timer); pendingDelete = null; }
+  const photos = (await Promise.all(p.photoIds.map(pid => dbGet('photos', pid)))).filter(Boolean);
+  for (const ph of photos) await dbDel('photos', ph.id);
+  S.problems = S.problems.filter(x => x.id !== id); await dbDel('problems', id); reindex();
+  pendingDelete = { p, photos, timer: setTimeout(() => { pendingDelete = null; hideUndo(); }, 5000) };
+  openRow = null; render(); showUndo('已刪除這題');
+}
+async function undoDelete() {
+  if (!pendingDelete) return;
+  const { p, photos, timer } = pendingDelete; clearTimeout(timer); pendingDelete = null; hideUndo();
+  for (const ph of photos) await dbPut('photos', ph);
+  S.problems.push(p); await dbPut('problems', p); reindex();
+  render(); toast('已復原');
+}
+ACT['swipe-delete'] = d => deleteProblemWithUndo(d.id);
+ACT['undo-delete'] = () => undoDelete();
+
 document.addEventListener('click', async e => {
+  const sw = e.target.closest('.swipe');
+  if (sw && !e.target.closest('.swipe-del')) {
+    const recent = Date.now() - (sw._swipedAt || 0) < 400;
+    if (recent || sw.classList.contains('open')) { e.preventDefault(); if (!recent) setSwipe(sw, false); return; }
+  }
   const a = e.target.closest('a[href^="#"]');
   if (a && !a.dataset.act && a.getAttribute('href') === (location.hash || '#/')) { e.preventDefault(); currentRoute = null; render(); return; }
   const el = e.target.closest('[data-act]'); if (!el || el.disabled) return;
