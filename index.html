@@ -1,0 +1,1411 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="考點筆記">
+<meta name="theme-color" content="#EDF0F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10151C" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>考點筆記</title>
+<style>
+:root{
+  --bg:#EDF0F3; --paper:#FFFFFF; --ink:#18202B; --ink2:#535D6B; --ink3:#7F8998; --line:#D3D9E1; --soft:#F5F7F9;
+  --pen:#C4342C; --pen-bg:#FBECEA; --amber:#9A6200; --amber-bg:#FBF0DA; --ok:#1C7550; --ok-bg:#E2F2EA; --focus:#2D6CB5;
+  --s-ds:#2D6CB5; --s-algo:#6B4BB5; --s-co:#2B8558; --s-os:#B26C0B; --s-dm:#AD3F78; --s-la:#13809A;
+  --nav-h:62px;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#10151C; --paper:#19202A; --ink:#E5E9EF; --ink2:#A3ADBB; --ink3:#748093; --line:#2B3542; --soft:#151B23;
+    --pen:#FF7468; --pen-bg:#3A1F1E; --amber:#E7A83E; --amber-bg:#372A13; --ok:#55C796; --ok-bg:#15301F; --focus:#72AAE9;
+    --s-ds:#64A0E4; --s-algo:#A68AE6; --s-co:#55BE8A; --s-os:#E6A140; --s-dm:#E079AE; --s-la:#45B8CC;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;padding-top:env(safe-area-inset-top);-webkit-tap-highlight-color:transparent}
+body.noscroll{overflow:hidden}
+main{max-width:640px;margin:0 auto;padding:8px 16px calc(var(--nav-h) + env(safe-area-inset-bottom) + 28px)}
+a{color:var(--focus)}
+h1{font-size:27px;line-height:1.25;margin:12px 0 10px;font-weight:700;letter-spacing:.01em}
+h2{font-size:17px;line-height:1.35;margin:26px 0 10px;font-weight:650}
+p{margin:6px 0}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.muted{color:var(--ink2)}
+.small{font-size:13px}
+.lede{color:var(--ink2);font-size:15px}
+.empty{color:var(--ink2);padding:18px 0}
+.center{text-align:center}
+.hint{font-size:14px;color:var(--ink2);min-height:0}
+.hint.err{color:var(--pen)}
+.label{display:block;font-size:14px;color:var(--ink2);margin:12px 0 6px}
+.row{display:flex;gap:8px;align-items:center;margin:10px 0}
+.row.wrap{flex-wrap:wrap}
+.row > input{flex:1}
+.row2{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+.crumb{font-size:14px;color:var(--ink2);margin-top:10px}
+.crumb a{text-decoration:none}
+.sec-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sec-head h2{margin-bottom:10px}
+
+/* controls */
+.btn{appearance:none;-webkit-appearance:none;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;font-size:15px;line-height:1.3;padding:10px 14px;border-radius:10px;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);font-weight:600}
+.btn.big{width:100%;min-height:52px;font-size:17px;margin-top:10px}
+.btn.small{min-height:36px;padding:6px 12px;font-size:14px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--focus);padding-left:6px;padding-right:6px}
+.btn.danger{color:var(--pen)}
+.btn:disabled{opacity:.4;cursor:default}
+input,textarea,select{font:inherit;font-size:16px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;margin:0}
+select{-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink3) 50%),linear-gradient(135deg,var(--ink3) 50%,transparent 50%);background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px}
+textarea{min-height:96px;resize:vertical;line-height:1.55}
+input::placeholder,textarea::placeholder{color:var(--ink3)}
+.search input{font-size:17px;padding:13px 14px;border-radius:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{appearance:none;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;font-size:14px;padding:7px 12px;border-radius:999px;cursor:pointer;min-height:36px}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.seg{display:flex;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:3px;margin:6px 0 14px}
+.seg > *{flex:1;text-align:center;padding:8px 6px;border-radius:8px;text-decoration:none;color:var(--ink2);font-size:15px;border:0;background:none;font:inherit;cursor:pointer}
+.seg > .on{background:var(--paper);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+/* status */
+.badge{display:inline-block;font-size:12px;font-weight:650;padding:2px 8px;border-radius:999px;line-height:1.5}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}
+.badge.unsure{background:var(--amber-bg);color:var(--amber)}
+.badge.wrong{background:var(--pen-bg);color:var(--pen)}
+.t-wrong{color:var(--pen);font-weight:600}
+.t-unsure{color:var(--amber);font-weight:600}
+.status-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.st{appearance:none;font:inherit;font-size:17px;font-weight:600;min-height:54px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.st.ok.on{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.st.unsure.on{background:var(--amber-bg);border-color:var(--amber);color:var(--amber)}
+.st.wrong.on{background:var(--pen-bg);border-color:var(--pen);color:var(--pen)}
+
+/* the red pen: error reasons */
+.reason{border-left:3px solid var(--pen);padding:2px 0 2px 11px;margin:6px 0;color:var(--pen);font-weight:500;white-space:pre-wrap}
+#af-reason{border-color:var(--pen);border-left-width:3px}
+
+/* subject index tabs */
+.idx{display:flex;flex-direction:column;gap:8px}
+.idx a{display:flex;align-items:stretch;background:var(--paper);border:1px solid var(--line);border-radius:4px 12px 12px 4px;overflow:hidden;text-decoration:none;color:var(--ink);min-height:62px}
+.idx .tab{width:34px;flex:none;background:var(--sc);color:var(--paper);display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;text-orientation:upright;font-weight:700;font-size:14px;letter-spacing:.12em}
+.idx .idx-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 14px}
+.idx .idx-name{font-weight:650;font-size:16px}
+.idx .idx-meta{font-size:13px;color:var(--ink2)}
+
+/* lists */
+.list{display:flex;flex-direction:column;gap:6px}
+.crow{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--sc,var(--line));border-radius:8px;padding:10px 12px;text-decoration:none;color:var(--ink);width:100%;font:inherit;text-align:left;cursor:pointer}
+.crow-main{display:flex;flex-direction:column;min-width:0}
+.crow-name{font-weight:600;font-size:16px;line-height:1.35}
+.crow-path,.crow-why{font-size:13px;color:var(--ink2);line-height:1.4}
+.crow-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:13px;color:var(--ink2);flex:none;text-align:right}
+.prow{display:flex;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px;text-decoration:none;color:var(--ink)}
+.thumb{width:62px;height:62px;flex:none;border-radius:6px;object-fit:cover;background:var(--soft);border:1px solid var(--line)}
+.thumb.empty{display:grid;place-items:center;color:var(--ink3);font-size:20px}
+.prow-main{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.prow-top{display:flex;gap:8px;align-items:center}
+.prow-concepts{font-size:14px;font-weight:600;line-height:1.4}
+.prow-reason{font-size:14px;color:var(--pen);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.45}
+.prow-text{font-size:14px;color:var(--ink2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.45}
+
+/* concept / problem pages */
+.concept-title,.subj-title{border-left:6px solid var(--sc);padding-left:12px;margin-left:-2px}
+.aliases{font-size:14px;color:var(--ink2)}
+.summary{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:4px 14px 12px;margin-top:14px}
+.summary h2{margin-top:12px}
+.summary-body{white-space:pre-wrap;line-height:1.7}
+.tchip{display:inline-block;font-size:13px;padding:3px 10px;border-radius:999px;background:var(--pen-bg);color:var(--pen);margin:0 6px 6px 0}
+.tchip b{font-weight:700;margin-left:2px}
+.pconcepts{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.cpill{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 4px;font-size:14px;font-weight:600}
+.cpill span{background:var(--sc);color:var(--paper);border-radius:999px;padding:1px 8px;font-size:12px}
+.photos{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.photos img{width:100%;border-radius:8px;border:1px solid var(--line);background:var(--soft);min-height:80px;cursor:zoom-in}
+.ptext{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;white-space:pre-wrap;line-height:1.7}
+.attempts{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+.attempts li{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.att-top{display:flex;gap:8px;align-items:center}
+.att-types{margin-top:6px}
+
+/* add flow */
+.step{border-top:1px solid var(--line);padding-top:4px;margin-top:18px}
+.step:first-of-type{border-top:0;margin-top:0}
+.step h2{display:flex;align-items:center;gap:10px;margin-top:14px}
+.step h2 .n{width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--paper);display:inline-grid;place-items:center;font-size:13px;font-weight:700;flex:none}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pg-item{position:relative;aspect-ratio:3/4}
+.pg-item img{width:100%;height:100%;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.pg-x{position:absolute;top:4px;right:4px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:18px;line-height:1;cursor:pointer}
+.pg-add{aspect-ratio:3/4;border:1.5px dashed var(--ink3);border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--ink2);font-size:14px;padding:8px;cursor:pointer;position:relative;background:var(--paper)}
+.pg-add input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.ccard{background:var(--paper);border:1.5px solid var(--focus);border-radius:12px;padding:12px 14px;margin:10px 0}
+.ccard.done{border-color:var(--line);border-left:4px solid var(--ok)}
+.ccard-head{font-size:14px;color:var(--ink2)}
+.ccard.done .ccard-head{color:var(--ok);font-weight:600}
+.ccard-path{font-size:16px;margin:4px 0;line-height:1.5}
+.ccard .row{margin-bottom:0}
+.sch{display:inline-block;background:var(--sc);color:var(--paper);border-radius:4px;padding:0 6px;font-size:13px;font-weight:600;margin-right:4px;vertical-align:1px}
+.missing{color:var(--pen);font-size:14px;margin-top:16px;min-height:1em}
+details summary{cursor:pointer;color:var(--focus);padding:8px 0;font-size:15px}
+.manual{margin-top:6px}
+
+/* banners */
+.banner{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:10px;padding:12px 14px;margin:12px 0}
+.banner.warn{border-left-color:var(--pen)}
+.banner > b{display:block;margin-bottom:2px}
+.banner p{font-size:14px;color:var(--ink2)}
+.steps{padding-left:22px;margin:8px 0}
+.steps li{margin:4px 0}
+
+/* review */
+.sess-top{display:flex;justify-content:space-between;font-size:14px;color:var(--ink2);margin-top:12px}
+.progress{height:4px;background:var(--line);border-radius:2px;margin:8px 0 4px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--ink)}
+.reveal{border-top:1px dashed var(--line);margin-top:18px}
+.tally{display:flex;gap:10px;margin:16px 0}
+.tally div{flex:1;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;font-size:14px;color:var(--ink2)}
+.tally b{display:block;font-size:24px;color:var(--ink)}
+
+/* stats */
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:7.5em 1fr 3em;gap:10px;align-items:center;font-size:14px}
+.bar-t{height:10px;background:var(--soft);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.bar-t i{display:block;height:100%;background:var(--pen)}
+.bar-n{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+table.subj{width:100%;border-collapse:collapse;font-size:14px;background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+table.subj th,table.subj td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+table.subj th:first-child,table.subj td:first-child{text-align:left}
+table.subj th{color:var(--ink2);font-weight:500;font-size:13px}
+table.subj tr:last-child td{border-bottom:0}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sc);margin-right:6px;vertical-align:1px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:4px 14px 14px;margin:12px 0}
+.panel h2{margin-top:12px}
+
+/* tab bar */
+#tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--paper);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+@supports (background:color-mix(in srgb,red 50%,blue)) and ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){#tabs{background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
+#tabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:11px;color:var(--ink3);text-decoration:none;padding:3px 0;max-width:110px}
+#tabs a.on{color:var(--ink);font-weight:600}
+#tabs svg{width:24px;height:24px}
+#tabs a.add .ic{background:var(--ink);color:var(--paper);border-radius:12px;width:48px;height:30px;display:grid;place-items:center}
+#tabs a.add svg{width:20px;height:20px}
+body.typing #tabs{display:none}
+
+/* sheet, toast, viewer */
+#sheet-root{display:none}
+#sheet-root.open{display:block}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:40}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--bg);border-radius:16px 16px 0 0;max-height:88vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:8px 16px calc(20px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto}
+.sheet-x{position:sticky;top:0;float:right;margin-top:4px;appearance:none;border:0;background:var(--soft);color:var(--ink2);font:inherit;font-size:14px;padding:6px 12px;border-radius:999px;cursor:pointer;z-index:2}
+.sheet h2{margin-top:10px}
+.sheet .list{max-height:40vh;overflow:auto}
+.prompt-pre{white-space:pre-wrap;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:50vh;overflow:auto}
+#toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-size:15px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:60;max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#viewer{position:fixed;inset:0;background:#000;z-index:70;overflow:auto;display:none;padding-top:env(safe-area-inset-top)}
+#viewer.open{display:block}
+#viewer img{width:100%;display:block;touch-action:pinch-zoom}
+#viewer button{position:fixed;top:calc(10px + env(safe-area-inset-top));right:12px;z-index:71;appearance:none;border:0;background:rgba(255,255,255,.2);color:#fff;font:inherit;padding:8px 14px;border-radius:999px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main id="app"><p class="muted" style="padding-top:40px">載入中…</p></main>
+<nav id="tabs" aria-label="主要功能">
+  <a href="#/" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>查找</a>
+  <a href="#/browse" data-tab="browse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/><path d="M15 4v6l-2-1.4L11 10V4"/></svg>瀏覽</a>
+  <a href="#/add" data-tab="add" class="add"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>新增</a>
+  <a href="#/review" data-tab="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="13" height="14" rx="2"/><path d="M8 3h10a2 2 0 012 2v12"/><path d="M8 13l2 2 4-4"/></svg>複習</a>
+  <a href="#/more" data-tab="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>更多</a>
+</nav>
+<div id="sheet-root"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="viewer"><button type="button" data-act="viewer-close">關閉</button><img alt="題目照片"></div>
+<script>
+'use strict';
+/* ============================================================
+   考點筆記 — 資工所六科錯題與考點筆記
+   單一檔案、無外部相依。資料存在瀏覽器的 IndexedDB。
+   結構說明見 README.md。
+   ============================================================ */
+const APP_VERSION = '1.0.0';
+
+const SUBJECTS = [
+  { id:'ds',   name:'資料結構',   short:'資結', aliases:['資結','ds','datastructure','datastructures'] },
+  { id:'algo', name:'演算法',     short:'演算', aliases:['演算','算法','algorithm','algorithms','algo'] },
+  { id:'co',   name:'計算機組織', short:'計組', aliases:['計組','計算機結構','計結','computerorganization','computerarchitecture','co'] },
+  { id:'os',   name:'作業系統',   short:'OS',   aliases:['os','operatingsystem','operatingsystems','作系'] },
+  { id:'dm',   name:'離散數學',   short:'離散', aliases:['離散','discretemath','discretemathematics','dm'] },
+  { id:'la',   name:'線性代數',   short:'線代', aliases:['線代','linearalgebra','la'] },
+];
+const SUBJ = Object.fromEntries(SUBJECTS.map(s => [s.id, s]));
+
+// 第一次開啟時建立的章節骨架（之後可以在 App 裡新增、改名）
+const SEED_CHAPTERS = {
+  ds:   ['複雜度分析','陣列與鏈結串列','堆疊與佇列','樹與二元樹','二元搜尋樹與平衡樹','堆積與優先佇列','B 樹與多元搜尋樹','圖的表示與走訪','排序','搜尋與雜湊','不相交集合','字串與 Trie'],
+  algo: ['漸近分析與遞迴式','分治法','動態規劃','貪婪演算法','圖的走訪與拓樸排序','最短路徑','最小生成樹','網路流與匹配','攤銷分析','隨機化演算法','字串比對','NP 完備性'],
+  co:   ['效能評估','指令集架構','數值表示與計算機算術','資料路徑與控制','管線化','管線危障','分支預測','快取','記憶體階層與虛擬記憶體','輸入輸出與匯流排','平行處理與多核'],
+  os:   ['作業系統概論與系統呼叫','行程','執行緒','CPU 排程','同步','死結','主記憶體管理','虛擬記憶體','檔案系統','大量儲存與磁碟排程','輸入輸出系統','保護與安全'],
+  dm:   ['邏輯與證明','集合、函數與關係','數學歸納法','計數原理與排列組合','鴿籠原理','排容原理','遞迴關係','生成函數','圖論','樹','布林代數','代數結構','數論'],
+  la:   ['線性方程組與高斯消去','矩陣運算與反矩陣','行列式','向量空間','子空間、基底與維度','線性轉換','內積與正交','Gram-Schmidt 與 QR 分解','最小平方法','特徵值與特徵向量','對角化','對稱矩陣與正定','奇異值分解','Jordan 標準式'],
+};
+
+const ERROR_TYPES = ['觀念不懂','公式或定義記錯','計算失誤','看錯題目','沒想到要用這個方法','時間不夠'];
+const TYPE_TIPS = {
+  '觀念不懂':'這類要回到課本或講義把觀念補起來，光刷題不會好。',
+  '公式或定義記錯':'把容易記錯的公式寫進考點的重點摘要，考前一次翻完。',
+  '計算失誤':'練習時放慢速度並驗算，考場上留時間檢查計算。',
+  '看錯題目':'讀題時圈出關鍵字和限制條件，再開始寫。',
+  '沒想到要用這個方法':'多看同一個考點的不同題型，練習「看到什麼就想到什麼」。',
+  '時間不夠':'用考古題計時練習，先寫有把握的題目。',
+};
+const STATUS = { ok:{label:'會'}, unsure:{label:'不確定'}, wrong:{label:'不會'} };
+const DAY = 86400000;
+
+/* ---------- utilities ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+const now = () => Date.now();
+const pad = n => String(n).padStart(2, '0');
+const fmtFull = t => { const d = new Date(t); return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`; };
+const daysAgo = t => { const d = Math.floor((now() - t) / DAY); return d <= 0 ? '今天' : d === 1 ? '昨天' : `${d} 天前`; };
+
+/* ---------- IndexedDB ---------- */
+const DB_NAME = 'kaodian-notebook', DB_VERSION = 1;
+const STORES = ['chapters','concepts','problems','photos','meta'];
+let db;
+function openDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB_NAME, DB_VERSION);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      for (const s of STORES) if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: s === 'meta' ? 'key' : 'id' });
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+function tx(store, mode, fn) {
+  return new Promise((res, rej) => {
+    const t = db.transaction(store, mode);
+    const req = fn(t.objectStore(store));
+    let out;
+    if (req) req.onsuccess = () => { out = req.result; };
+    t.oncomplete = () => res(out);
+    t.onerror = () => rej(t.error);
+    t.onabort = () => rej(t.error || new Error('儲存失敗，手機空間可能不足。'));
+  });
+}
+const dbAll = s => tx(s, 'readonly', st => st.getAll());
+const dbGet = (s, k) => tx(s, 'readonly', st => st.get(k));
+const dbPut = (s, v) => tx(s, 'readwrite', st => st.put(v));
+const dbDel = (s, k) => tx(s, 'readwrite', st => st.delete(k));
+function dbPutMany(s, arr) {
+  return new Promise((res, rej) => {
+    const t = db.transaction(s, 'readwrite'); const st = t.objectStore(s);
+    arr.forEach(v => st.put(v));
+    t.oncomplete = () => res(); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+  });
+}
+function dbClearAll() {
+  return new Promise((res, rej) => {
+    const t = db.transaction(STORES, 'readwrite');
+    STORES.forEach(s => t.objectStore(s).clear());
+    t.oncomplete = () => res(); t.onerror = () => rej(t.error);
+  });
+}
+
+/* ---------- state ---------- */
+const S = { chapters:[], concepts:[], problems:[], meta:{} };
+let CH = {}, CO = {}, PR = {};
+function reindex() {
+  CH = Object.fromEntries(S.chapters.map(x => [x.id, x]));
+  CO = Object.fromEntries(S.concepts.map(x => [x.id, x]));
+  PR = Object.fromEntries(S.problems.map(x => [x.id, x]));
+}
+async function setMeta(key, value) { S.meta[key] = value; await dbPut('meta', { key, value }); }
+async function loadAll() {
+  [S.chapters, S.concepts, S.problems] = await Promise.all([dbAll('chapters'), dbAll('concepts'), dbAll('problems')]);
+  const metas = await dbAll('meta');
+  S.meta = Object.fromEntries(metas.map(m => [m.key, m.value]));
+  if (!S.chapters.length && !S.meta.seeded) {
+    const list = [];
+    for (const s of SUBJECTS) SEED_CHAPTERS[s.id].forEach((name, i) => list.push({ id: uid(), subject: s.id, name, order: i }));
+    await dbPutMany('chapters', list);
+    S.chapters = list;
+    await setMeta('seeded', true);
+  }
+  reindex();
+}
+
+const chaptersOf = sid => S.chapters.filter(c => c.subject === sid).sort((a, b) => a.order - b.order);
+const conceptsOfChapter = chid => S.concepts.filter(c => c.chapterId === chid).sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+const problemsOf = cid => S.problems.filter(p => p.conceptIds.includes(cid)).sort((a, b) => b.createdAt - a.createdAt);
+const latest = p => p.attempts[p.attempts.length - 1];
+const statusOf = p => (latest(p) || {}).status || 'ok';
+const lastTouched = p => Math.max(p.createdAt, ...p.attempts.map(a => a.at));
+const subjectOfConcept = c => (CH[c.chapterId] || {}).subject;
+function conceptPath(c) { const ch = CH[c.chapterId] || { name:'（未分章節）', subject:'ds' }; return { ch, s: SUBJ[ch.subject] || SUBJECTS[0] }; }
+function distinctSources() { return [...new Set(S.problems.map(p => p.source).filter(Boolean))].sort(); }
+const sourceSchool = src => ((src || '').trim().match(/^[^\d\s]+/) || [''])[0];
+
+/* ---------- text matching ---------- */
+function norm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[\s\p{P}\p{S}]/gu, ''); }
+function grams(s) {
+  const g = new Map();
+  if (s.length === 1) { g.set(s, 1); return g; }
+  for (let i = 0; i < s.length - 1; i++) { const k = s.slice(i, i + 2); g.set(k, (g.get(k) || 0) + 1); }
+  return g;
+}
+function dice(a, b) {
+  const A = grams(a), B = grams(b); let inter = 0, na = 0, nb = 0;
+  A.forEach(v => na += v); B.forEach(v => nb += v);
+  A.forEach((v, k) => { if (B.has(k)) inter += Math.min(v, B.get(k)); });
+  return na + nb ? 2 * inter / (na + nb) : 0;
+}
+function sim(a, b) {
+  a = norm(a); b = norm(b);
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  const short = a.length <= b.length ? a : b, long = a.length <= b.length ? b : a;
+  let s = dice(a, b);
+  if (short.length >= 2 && long.includes(short)) s = Math.max(s, 0.6 + 0.35 * short.length / long.length);
+  return s;
+}
+function conceptScore(q, c) { let best = sim(q, c.name); for (const a of c.aliases || []) best = Math.max(best, sim(q, a)); return best; }
+function rankConcepts(q, sid) {
+  return S.concepts.map(c => ({ c, score: conceptScore(q, c) + (sid && subjectOfConcept(c) === sid ? 0.05 : 0) }))
+    .filter(x => x.score >= 0.3).sort((a, b) => b.score - a.score);
+}
+function exactConcept(q, sid) {
+  const n = norm(q); if (!n) return null;
+  const hits = S.concepts.filter(c => norm(c.name) === n || (c.aliases || []).some(a => norm(a) === n));
+  return hits.find(c => subjectOfConcept(c) === sid) || hits[0] || null;
+}
+function matchSubject(text) {
+  const n = norm(text); if (!n) return null;
+  for (const s of SUBJECTS) if ([s.name, s.short, ...s.aliases].some(a => norm(a) === n)) return s.id;
+  for (const s of SUBJECTS) if ([s.name, ...s.aliases].some(a => { const x = norm(a); return x.length >= 2 && n.length >= 2 && (n.includes(x) || x.includes(n)); })) return s.id;
+  return null;
+}
+function matchChapter(sid, name) {
+  let best = null, bs = 0;
+  for (const ch of chaptersOf(sid)) { const s = sim(name, ch.name); if (s > bs) { bs = s; best = ch; } }
+  return bs >= 0.5 ? best : null;
+}
+const tokens = q => q.split(/\s+/).map(norm).filter(Boolean);
+function conceptHay(c) { const { s, ch } = conceptPath(c); return norm([c.name, ...(c.aliases || []), ch.name, s.name, s.short].join(' ')); }
+function problemHay(p) {
+  return norm([p.text, p.source, ...p.attempts.map(a => (a.reason || '') + ' ' + (a.errorTypes || []).join(' ')),
+    ...p.conceptIds.map(id => CO[id] ? CO[id].name + ' ' + (CO[id].aliases || []).join(' ') : '')].join(' '));
+}
+function searchConcepts(q) {
+  const tk = tokens(q); if (!tk.length) return [];
+  const sub = S.concepts.filter(c => { const h = conceptHay(c); return tk.every(t => h.includes(t)); });
+  const fz = rankConcepts(q).map(x => x.c).filter(c => !sub.includes(c));
+  return { sub, fz };
+}
+
+/* ---------- prompt for GPT ---------- */
+function buildPrompt() {
+  const lines = [];
+  for (const s of SUBJECTS) for (const ch of chaptersOf(s.id)) for (const c of conceptsOfChapter(ch.id)) lines.push(`${s.name}｜${ch.name}｜${c.name}`);
+  const chapterLines = SUBJECTS.map(s => `${s.name}：${chaptersOf(s.id).map(c => c.name).join('、')}`);
+  return `你是資工所考試（資料結構、演算法、計算機組織、作業系統、離散數學、線性代數）的筆記助理。我會附上一張題目照片，請你：
+1. 把題目完整轉成文字。數學式可以用一般文字或 LaTeX。
+2. 判斷這題考的考點（1 到 3 個）。
+   - 優先從下面「既有考點清單」挑選，挑中的話名稱要一字不改照抄。
+   - 清單裡真的沒有，才提出新考點：名稱要具體（例如「AVL 樹旋轉」而不是「樹」），並從「章節清單」挑一個章節放。
+3. 照片上看得出出處（學校、年份）就寫，看不出來就留空。
+4. 不要解題，也不要分析我錯在哪裡。
+
+請只用以下格式回覆，並把整段放在一個程式碼區塊裡：
+===題目===
+（題目文字）
+===考點===
+既有｜科目｜章節｜考點名稱
+新增｜科目｜章節｜考點名稱
+===出處===
+（例如：台大 112；看不出來就留空）
+===結束===
+
+既有考點清單：
+${lines.length ? lines.join('\n') : '（目前還沒有任何考點，請全部用「新增」）'}
+
+章節清單：
+${chapterLines.join('\n')}`;
+}
+function buildSummaryPrompt(c) {
+  const { s, ch } = conceptPath(c);
+  return `請幫我寫資工所考試的考前重點摘要，考點是「${s.name} › ${ch.name} › ${c.name}」。
+要求：繁體中文、條列、400 字以內，包含：
+1. 核心定義或觀念（一兩句話講清楚）
+2. 必背公式、性質或步驟
+3. 常見考法與題型
+4. 容易搞錯的地方
+不要寫開場白和結語，只要摘要本身，不要用表格。`;
+}
+
+/* ---------- parse GPT reply ---------- */
+function parseReply(text) {
+  const t = String(text || '').replace(/\r/g, '').replace(/```[^\n]*\n?/g, '');
+  const re = /=+\s*(題目|考點|出處|結束)\s*=+/g;
+  const marks = []; let m;
+  while ((m = re.exec(t))) marks.push({ k: m[1], start: m.index, end: re.lastIndex });
+  if (!marks.some(x => x.k === '考點')) return null;
+  const sec = {};
+  marks.forEach((mk, i) => { const next = marks[i + 1]; if (!(mk.k in sec)) sec[mk.k] = t.slice(mk.end, next ? next.start : t.length).trim(); });
+  const concepts = [];
+  (sec['考點'] || '').split('\n').map(l => l.trim()).filter(Boolean).forEach(l => {
+    const parts = l.replace(/^([-*•]|\d+[.、)])\s*/, '').split(/[｜|]/).map(x => x.trim()).filter(Boolean);
+    if (!parts.length) return;
+    let kind = null;
+    if (/^(既有|新增|新)$/.test(parts[0])) kind = parts.shift().startsWith('既') ? 'existing' : 'new';
+    let subject = '', chapter = '', name = '';
+    if (parts.length >= 3) { subject = parts[0]; chapter = parts[1]; name = parts.slice(2).join(' '); }
+    else if (parts.length === 2) { subject = parts[0]; name = parts[1]; }
+    else name = parts[0];
+    name = name.replace(/^[「『"]|[」』"]$/g, '').trim();
+    if (name) concepts.push({ kind, subject, chapter, name });
+  });
+  let source = (sec['出處'] || '').split('\n')[0].trim();
+  if (/^[（(].*[)）]$/.test(source) || /^(無|留空|不明|未知|看不出來|-|—|n\/?a)$/i.test(source)) source = '';
+  let qtext = sec['題目'] || '';
+  if (/^[（(]題目文字[)）]$/.test(qtext)) qtext = '';
+  return { text: qtext, source, concepts };
+}
+
+/* ---------- classification cards (add flow) ---------- */
+function makeCard({ name, subject, chapter }, from) {
+  const sid = matchSubject(subject || '');
+  const ranked = rankConcepts(name, sid);
+  const exact = exactConcept(name, sid);
+  const card = { key: uid(), from, input: name, confirmed: false, candidates: ranked.slice(0, 4).map(x => x.c.id) };
+  if (exact) { card.mode = 'existing'; card.conceptId = exact.id; }
+  else if (ranked[0] && ranked[0].score >= 0.72) { card.mode = 'existing'; card.conceptId = ranked[0].c.id; }
+  else {
+    card.mode = 'new'; card.newName = name;
+    card.newSid = sid || (ranked[0] ? subjectOfConcept(ranked[0].c) : '') || '';
+    const ch = card.newSid && chapter ? matchChapter(card.newSid, chapter) : null;
+    card.newChapterId = ch ? ch.id : (card.newSid && !chapter && ranked[0] && subjectOfConcept(ranked[0].c) === card.newSid ? ranked[0].c.chapterId : '');
+    card.newChapterName = (!ch && chapter && card.newSid) ? chapter : '';
+  }
+  return card;
+}
+function cardReadyNew(card) { return card.newName && card.newName.trim() && card.newSid && (card.newChapterId || card.newChapterName); }
+
+async function createChapter(sid, name) {
+  const existing = chaptersOf(sid).find(ch => norm(ch.name) === norm(name));
+  if (existing) return existing.id;
+  const ch = { id: uid(), subject: sid, name: name.trim(), order: Math.max(-1, ...chaptersOf(sid).map(c => c.order)) + 1 };
+  S.chapters.push(ch); await dbPut('chapters', ch); reindex();
+  return ch.id;
+}
+async function createConcept({ name, sid, chapterId, chapterName, alias }) {
+  const dup = S.concepts.find(c => subjectOfConcept(c) === sid && norm(c.name) === norm(name));
+  if (dup) return dup.id;
+  const chId = chapterId || await createChapter(sid, chapterName);
+  const c = { id: uid(), chapterId: chId, name: name.trim(), aliases: [], summary: '', createdAt: now(), lastReviewedAt: null };
+  if (alias && norm(alias) !== norm(c.name)) c.aliases.push(alias.trim());
+  S.concepts.push(c); await dbPut('concepts', c); reindex();
+  return c.id;
+}
+async function addAlias(c, alias) {
+  if (!alias || norm(alias) === norm(c.name) || (c.aliases || []).some(a => norm(a) === norm(alias))) return;
+  c.aliases = [...(c.aliases || []), alias.trim()];
+  await dbPut('concepts', c);
+}
+async function resolvePick(r, alias) {
+  if (r.type === 'existing') { await addAlias(CO[r.id], alias); return r.id; }
+  return createConcept({ name: r.name, sid: r.sid, chapterId: r.chapterId, chapterName: r.chapterName, alias });
+}
+
+/* ---------- photos ---------- */
+async function compressImage(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const max = 1600; let w = img.naturalWidth, h = img.naturalHeight;
+    const r = Math.min(1, max / Math.max(w, h)); w = Math.round(w * r); h = Math.round(h * r);
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
+    return await new Promise(res => cv.toBlob(b => res(b || file), 'image/jpeg', 0.8));
+  } catch (e) { return file; }
+  finally { URL.revokeObjectURL(url); }
+}
+const urlCache = new Map();
+async function photoURL(id) {
+  if (urlCache.has(id)) return urlCache.get(id);
+  const rec = await dbGet('photos', id);
+  if (!rec) return '';
+  const u = URL.createObjectURL(rec.blob); urlCache.set(id, u); return u;
+}
+function hydratePhotos(root = document) {
+  $$('img[data-photo]', root).forEach(async img => { if (img.getAttribute('src')) return; const u = await photoURL(img.dataset.photo); if (u) img.src = u; });
+}
+const blobURLs = new WeakMap();
+function blobURL(b) { if (!blobURLs.has(b)) blobURLs.set(b, URL.createObjectURL(b)); return blobURLs.get(b); }
+function openViewer(src) { const v = $('#viewer'); $('img', v).src = src; v.classList.add('open'); document.body.classList.add('noscroll'); }
+
+/* ---------- platform helpers ---------- */
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const mustInstall = () => isIOS && !isStandalone();
+async function requestPersist() { try { if (navigator.storage && navigator.storage.persist && !(await navigator.storage.persisted())) await navigator.storage.persist(); } catch (e) {} }
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;opacity:0'; document.body.appendChild(ta);
+    ta.select(); ta.setSelectionRange(0, text.length);
+    let ok = false; try { ok = document.execCommand('copy'); } catch (_) {}
+    ta.remove(); return ok;
+  }
+}
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2400); }
+function openSheet(html, mount) {
+  const root = $('#sheet-root');
+  root.innerHTML = `<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet" role="dialog" aria-modal="true"><button type="button" class="sheet-x" data-act="sheet-close">關閉</button><div class="sheet-body">${html}</div></div>`;
+  root.classList.add('open'); document.body.classList.add('noscroll');
+  if (mount) mount($('.sheet-body', root));
+  hydratePhotos(root);
+}
+function closeSheet() { const root = $('#sheet-root'); root.classList.remove('open'); root.innerHTML = ''; document.body.classList.remove('noscroll'); }
+
+/* ---------- shared fragments ---------- */
+const sch = s => `<span class="sch" style="--sc:var(--s-${s.id})">${s.short}</span>`;
+function conceptRow(c, why) {
+  const { s, ch } = conceptPath(c); const ps = problemsOf(c.id);
+  const w = ps.filter(p => statusOf(p) === 'wrong').length, u = ps.filter(p => statusOf(p) === 'unsure').length;
+  return `<a class="crow" href="#/concept/${c.id}" style="--sc:var(--s-${s.id})"><span class="crow-main"><span class="crow-name">${esc(c.name)}</span>${why ? `<span class="crow-why">${why}</span>` : `<span class="crow-path">${s.short} › ${esc(ch.name)}</span>`}</span><span class="crow-meta"><span>${ps.length} 題</span>${w ? `<span class="t-wrong">${w} 不會</span>` : ''}${u ? `<span class="t-unsure">${u} 不確定</span>` : ''}</span></a>`;
+}
+function problemRow(p, excludeConcept) {
+  const st = statusOf(p), l = latest(p);
+  const cs = p.conceptIds.filter(id => id !== excludeConcept).map(id => CO[id]).filter(Boolean);
+  return `<a class="prow" href="#/problem/${p.id}">${p.photoIds[0] ? `<img class="thumb" data-photo="${p.photoIds[0]}" alt="">` : `<span class="thumb empty">文</span>`}<span class="prow-main"><span class="prow-top"><span class="badge ${st}">${STATUS[st].label}</span>${p.source ? `<span class="muted small">${esc(p.source)}</span>` : ''}</span>${cs.length ? `<span class="prow-concepts">${excludeConcept ? '也考：' : ''}${cs.map(c => esc(c.name)).join('、')}</span>` : ''}${l && l.reason ? `<span class="prow-reason">${esc(l.reason)}</span>` : (p.text ? `<span class="prow-text">${esc(p.text.slice(0, 80))}</span>` : '')}</span></a>`;
+}
+function conceptPills(p) {
+  return `<div class="pconcepts">${p.conceptIds.map(id => CO[id]).filter(Boolean).map(c => { const { s } = conceptPath(c); return `<a class="cpill" href="#/concept/${c.id}" style="--sc:var(--s-${s.id})"><span>${s.short}</span>${esc(c.name)}</a>`; }).join('')}</div>`;
+}
+function attemptHTML(a) {
+  return `<li><div class="att-top"><span class="badge ${a.status}">${STATUS[a.status].label}</span><span class="muted small">${fmtFull(a.at)}${a.via === 'review' ? '・複習' : a.via === 'retry' ? '・重做' : ''}</span></div>${(a.errorTypes || []).length ? `<div class="att-types">${a.errorTypes.map(t => `<span class="tchip">${esc(t)}</span>`).join('')}</div>` : ''}${a.reason ? `<div class="reason">${esc(a.reason)}</div>` : ''}</li>`;
+}
+function subjectStats(sid) {
+  const ids = new Set(S.concepts.filter(c => subjectOfConcept(c) === sid).map(c => c.id));
+  const ps = S.problems.filter(p => p.conceptIds.some(id => ids.has(id)));
+  return { concepts: ids.size, problems: ps.length, wrong: ps.filter(p => statusOf(p) === 'wrong').length, unsure: ps.filter(p => statusOf(p) === 'unsure').length };
+}
+function subjectIndexHTML() {
+  return `<div class="idx">${SUBJECTS.map(s => { const st = subjectStats(s.id); return `<a href="#/subject/${s.id}" style="--sc:var(--s-${s.id})"><span class="tab">${s.short}</span><span class="idx-body"><span class="idx-name">${s.name}</span><span class="idx-meta">${st.problems ? `${st.concepts} 個考點、${st.problems} 題${st.wrong ? `，<span class="t-wrong">${st.wrong} 題不會</span>` : ''}` : '還沒有題目'}</span></span></a>`; }).join('')}</div>`;
+}
+function chapterOptions(sid, selId, newName) {
+  if (!sid) return `<option value="">先選科目</option>`;
+  return `<option value="" ${!selId && !newName ? 'selected' : ''}>選擇章節</option>` +
+    chaptersOf(sid).map(ch => `<option value="${ch.id}" ${ch.id === selId ? 'selected' : ''}>${esc(ch.name)}</option>`).join('') +
+    (newName ? `<option value="__new" selected>＋ 新章節：${esc(newName)}</option>` : '') +
+    `<option value="__ask">＋ 新增章節…</option>`;
+}
+const subjectOptions = sel => `<option value="">選擇科目</option>` + SUBJECTS.map(s => `<option value="${s.id}" ${s.id === sel ? 'selected' : ''}>${s.name}</option>`).join('');
+
+/* ---------- attempt form (add / retry / review) ---------- */
+const TRIVIAL = /^(粗心|不小心|忘了|忘記|忘記了|不會|不懂|不知道|看錯|算錯|沒想到|不熟|不確定|不清楚)[。.!！~～]*$/;
+function attemptProblems(st) {
+  if (!st.status) return '選擇這題會不會';
+  if (st.status === 'ok') return '';
+  if (!st.errorTypes.length) return '選一個錯誤類型';
+  const r = (st.reason || '').trim();
+  if (!r) return st.status === 'wrong' ? '寫下為什麼錯' : '寫下哪裡不確定';
+  if (r.length < 6 || TRIVIAL.test(r)) return '錯因寫具體一點：是哪一步、哪個觀念卡住';
+  return '';
+}
+let AF = null; // { st, redraw, onChange }
+function attemptFormHTML(st) {
+  return `<div class="status-pick">${['ok','unsure','wrong'].map(k => `<button type="button" class="st ${k} ${st.status === k ? 'on' : ''}" data-act="af-status" data-v="${k}" aria-pressed="${st.status === k}">${STATUS[k].label}</button>`).join('')}</div>
+  ${st.status && st.status !== 'ok' ? `<span class="label">錯在哪一類？可以複選</span><div class="chips">${ERROR_TYPES.map(t => `<button type="button" class="chip ${st.errorTypes.includes(t) ? 'on' : ''}" data-act="af-type" data-v="${esc(t)}" aria-pressed="${st.errorTypes.includes(t)}">${t}</button>`).join('')}</div>
+  <label class="label" for="af-reason">${st.status === 'wrong' ? '為什麼錯？寫具體卡在哪一步' : '哪裡不確定？寫具體哪一步沒把握'}</label>
+  <textarea id="af-reason" placeholder="${st.status === 'wrong' ? '例如：以為 LR 旋轉是先右旋再左旋，順序搞反了' : '例如：不確定 TLB miss 時，要不要再加一次查 page table 的時間'}">${esc(st.reason)}</textarea>` : ''}`;
+}
+function mountAF(container, st, onChange) {
+  const draw = () => {
+    container.innerHTML = attemptFormHTML(st);
+    const ta = $('#af-reason', container);
+    if (ta) ta.addEventListener('input', () => { st.reason = ta.value; onChange(); });
+    onChange();
+  };
+  AF = { st, redraw: draw, onChange };
+  draw();
+}
+
+/* ---------- router ---------- */
+const app = $('#app');
+let currentRoute = null;
+function go(hash) { if (location.hash === hash) render(); else location.hash = hash; }
+window.addEventListener('hashchange', render);
+function render() {
+  const h = location.hash || '#/';
+  const routes = [
+    [/^#\/?$/, renderHome], [/^#\/browse$/, renderBrowse], [/^#\/subject\/(\w+)$/, renderSubject],
+    [/^#\/concept\/([\w-]+)$/, renderConcept], [/^#\/problem\/([\w-]+)$/, renderProblem],
+    [/^#\/problems$/, renderProblems], [/^#\/add$/, renderAdd], [/^#\/review$/, renderReview],
+    [/^#\/session$/, renderSession], [/^#\/stats$/, renderStats], [/^#\/more$/, renderMore],
+  ];
+  for (const [re, fn] of routes) {
+    const m = h.match(re);
+    if (m) {
+      const changed = currentRoute !== h; currentRoute = h;
+      fn(...m.slice(1));
+      if (changed) window.scrollTo(0, 0);
+      updateTabs(h); hydratePhotos(app);
+      return;
+    }
+  }
+  location.hash = '#/';
+}
+function updateTabs(h) {
+  const tab = /^#\/(browse|subject|concept|problem|problems)/.test(h) ? 'browse' : /^#\/add/.test(h) ? 'add' : /^#\/(review|session)/.test(h) ? 'review' : /^#\/(more|stats)/.test(h) ? 'more' : 'home';
+  $$('#tabs a').forEach(a => { const on = a.dataset.tab === tab; a.classList.toggle('on', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+}
+
+/* ---------- banners ---------- */
+function installSteps() {
+  return `<ol class="steps"><li>用 <b>Safari</b> 打開這個網址。</li><li>點<b>分享按鈕</b>（方框加向上箭頭）。找不到的話，先點網址列旁的「⋯」。</li><li>點<b>「加入主畫面」</b>，再點<b>「加入」</b>。</li><li>之後都從主畫面的<b>「考點筆記」</b>圖示開啟。</li></ol>`;
+}
+function installBanner() {
+  if (!mustInstall()) return '';
+  return `<div class="banner warn"><b>先加入主畫面，再開始記筆記</b><p>在 Safari 分頁裡記的筆記，和主畫面 App 裡的是分開的兩份，而且可能被 iPhone 自動清掉。</p>${installSteps()}</div>`;
+}
+function backupBanner() {
+  if (!S.problems.length) return '';
+  const last = S.meta.lastBackupAt;
+  if (last && now() - last < 7 * DAY) return '';
+  return `<div class="banner"><b>${last ? `已經 ${Math.floor((now() - last) / DAY)} 天沒備份了` : '筆記還沒備份過'}</b><p>手機遺失、換機或刪掉主畫面圖示時，備份檔是唯一能救回筆記的方法。</p><a class="btn small" href="#/more">去備份</a></div>`;
+}
+
+/* ---------- page: home / search ---------- */
+let homeQuery = '';
+function renderHome() {
+  app.innerHTML = `${installBanner()}${backupBanner()}
+  <h1>考點筆記</h1>
+  <div class="search"><input id="q" type="search" placeholder="搜尋考點、題目內容、錯因、出處" value="${esc(homeQuery)}" autocomplete="off" autocorrect="off" autocapitalize="off" enterkeyhint="search" aria-label="搜尋"></div>
+  <div id="home-body"></div>`;
+  const q = $('#q');
+  q.addEventListener('input', () => { homeQuery = q.value; renderHomeBody(); });
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') q.blur(); });
+  renderHomeBody();
+}
+function renderHomeBody() {
+  const body = $('#home-body'); if (!body) return;
+  body.innerHTML = homeQuery.trim() ? searchHTML(homeQuery) : dashboardHTML();
+  hydratePhotos(body);
+}
+function dashboardHTML() {
+  const n = S.problems.length;
+  const wrong = S.problems.filter(p => statusOf(p) === 'wrong').length, unsure = S.problems.filter(p => statusOf(p) === 'unsure').length;
+  const line = !n ? '還沒有任何題目。做完一題，就按下方的「新增」記下來。'
+    : `共 ${n} 題、${S.concepts.length} 個考點${wrong ? `，其中 ${wrong} 題還不會` : ''}${unsure ? `、${unsure} 題不確定` : ''}。`;
+  const recent = [...S.problems].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
+  return `<p class="lede">${line}</p><h2>六科索引</h2>${subjectIndexHTML()}${recent.length ? `<h2>最近新增</h2><div class="list">${recent.map(p => problemRow(p)).join('')}</div>` : ''}`;
+}
+function searchHTML(q) {
+  const tk = tokens(q); if (!tk.length) return '';
+  const { sub, fz } = searchConcepts(q);
+  const fuzzy = sub.length ? [] : fz.slice(0, 5);
+  const ps = S.problems.filter(p => { const h = problemHay(p); return tk.every(t => h.includes(t)); }).sort((a, b) => b.createdAt - a.createdAt);
+  if (!sub.length && !fuzzy.length && !ps.length) return `<p class="empty">找不到「${esc(q)}」。換個說法試試，例如中英文名稱、縮寫或章節名。</p>`;
+  return `${sub.length ? `<h2>考點（${sub.length}）</h2><div class="list">${sub.slice(0, 30).map(c => conceptRow(c)).join('')}</div>` : ''}
+  ${fuzzy.length ? `<h2>相近的考點</h2><div class="list">${fuzzy.map(c => conceptRow(c)).join('')}</div>` : ''}
+  ${ps.length ? `<h2>題目（${ps.length}）</h2><div class="list">${ps.slice(0, 60).map(p => problemRow(p)).join('')}</div>` : ''}`;
+}
+
+/* ---------- page: browse ---------- */
+const browseSeg = on => `<div class="seg"><a href="#/browse" class="${on === 'tree' ? 'on' : ''}">依科目</a><a href="#/problems" class="${on === 'list' ? 'on' : ''}">題目清單</a></div>`;
+function renderBrowse() { app.innerHTML = `<h1>瀏覽</h1>${browseSeg('tree')}${subjectIndexHTML()}`; }
+function renderSubject(sid) {
+  const s = SUBJ[sid]; if (!s) return go('#/browse');
+  const chs = chaptersOf(sid);
+  const withC = chs.filter(ch => conceptsOfChapter(ch.id).length), empty = chs.filter(ch => !conceptsOfChapter(ch.id).length);
+  app.innerHTML = `<div class="crumb"><a href="#/browse">瀏覽</a></div><h1 class="subj-title" style="--sc:var(--s-${sid})">${s.name}</h1>
+  ${withC.length ? withC.map(ch => `<section><div class="sec-head"><h2>${esc(ch.name)}</h2><button type="button" class="btn ghost small" data-act="chapter-rename" data-id="${ch.id}">改名</button></div><div class="list">${conceptsOfChapter(ch.id).map(c => conceptRow(c)).join('')}</div></section>`).join('')
+    : `<p class="empty">這科還沒有題目。新增題目時歸到這科，就會出現在這裡。</p>`}
+  ${empty.length ? `<details><summary>還沒有考點的章節（${empty.length}）</summary><div class="list">${empty.map(ch => `<div class="crow" style="--sc:var(--line)"><span class="crow-main"><span>${esc(ch.name)}</span></span><span class="row" style="margin:0"><button type="button" class="btn ghost small" data-act="chapter-rename" data-id="${ch.id}">改名</button><button type="button" class="btn ghost small danger" data-act="chapter-delete" data-id="${ch.id}">刪除</button></span></div>`).join('')}</div></details>` : ''}
+  <div class="row"><button type="button" class="btn" data-act="chapter-add" data-sid="${sid}">新增章節</button></div>`;
+}
+const PF = { status: 'all', sid: '', school: '' };
+function renderProblems() {
+  const schools = [...new Set(S.problems.map(p => sourceSchool(p.source)).filter(Boolean))].sort();
+  let ps = S.problems.slice();
+  if (PF.status !== 'all') ps = ps.filter(p => statusOf(p) === PF.status);
+  if (PF.sid) ps = ps.filter(p => p.conceptIds.some(id => CO[id] && subjectOfConcept(CO[id]) === PF.sid));
+  if (PF.school) ps = ps.filter(p => sourceSchool(p.source) === PF.school);
+  ps.sort((a, b) => b.createdAt - a.createdAt);
+  app.innerHTML = `<h1>瀏覽</h1>${browseSeg('list')}
+  <div class="chips">${[['all','全部'],['wrong','不會'],['unsure','不確定'],['ok','會']].map(([v, l]) => `<button type="button" class="chip ${PF.status === v ? 'on' : ''}" data-act="pf-status" data-v="${v}">${l}</button>`).join('')}</div>
+  <div class="row2"><select id="pf-sid" aria-label="科目"><option value="">所有科目</option>${SUBJECTS.map(s => `<option value="${s.id}" ${PF.sid === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}</select>
+  <select id="pf-school" aria-label="出處"><option value="">所有出處</option>${schools.map(x => `<option ${PF.school === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>
+  <p class="muted small" style="margin-top:12px">${ps.length} 題</p>
+  <div class="list">${ps.map(p => problemRow(p)).join('') || '<p class="empty">沒有符合條件的題目。</p>'}</div>`;
+  $('#pf-sid').onchange = e => { PF.sid = e.target.value; render(); };
+  $('#pf-school').onchange = e => { PF.school = e.target.value; render(); };
+}
+
+/* ---------- page: concept ---------- */
+function countTypes(attempts) {
+  const m = new Map();
+  attempts.forEach(a => (a.errorTypes || []).forEach(t => m.set(t, (m.get(t) || 0) + 1)));
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);
+}
+function renderConcept(id) {
+  const c = CO[id];
+  if (!c) { app.innerHTML = `<p class="empty">這個考點已經不存在（可能被合併或刪除了）。</p><a class="btn" href="#/browse">回到瀏覽</a>`; return; }
+  const { s, ch } = conceptPath(c); const ps = problemsOf(id);
+  const types = countTypes(ps.flatMap(p => p.attempts));
+  app.innerHTML = `<div class="crumb"><a href="#/subject/${s.id}">${s.name}</a> › ${esc(ch.name)}</div>
+  <h1 class="concept-title" style="--sc:var(--s-${s.id})">${esc(c.name)}</h1>
+  ${(c.aliases || []).length ? `<p class="aliases">也寫作：${c.aliases.map(esc).join('、')}</p>` : ''}
+  <section class="summary"><div class="sec-head"><h2>重點摘要</h2>${c.summary ? `<button type="button" class="btn ghost small" data-act="summary-edit" data-id="${id}">編輯</button>` : ''}</div>
+  ${c.summary ? `<div class="summary-body">${esc(c.summary)}</div>` : `<p class="muted">還沒有摘要。可以請 GPT 起草，貼回來再改成自己的話。</p><div class="row wrap"><button type="button" class="btn" data-act="copy-summary-prompt" data-id="${id}">複製摘要提示詞</button><button type="button" class="btn" data-act="summary-edit" data-id="${id}">貼上或自己寫</button></div>`}
+  </section>
+  ${types.length ? `<h2>在這個考點錯在哪</h2><div>${types.map(([t, n]) => `<span class="tchip">${esc(t)}<b>${n}</b></span>`).join('')}</div>` : ''}
+  <div class="sec-head"><h2>題目（${ps.length}）</h2>${ps.length ? `<button type="button" class="btn small" data-act="review-concept" data-id="${id}">複習這個考點</button>` : ''}</div>
+  <div class="list">${ps.map(p => problemRow(p, id)).join('') || '<p class="empty">還沒有題目。</p>'}</div>
+  <h2>整理這個考點</h2>
+  <div class="row wrap"><button type="button" class="btn" data-act="concept-rename" data-id="${id}">改名</button><button type="button" class="btn" data-act="concept-aliases" data-id="${id}">編輯別名</button><button type="button" class="btn" data-act="concept-move" data-id="${id}">移到其他章節</button><button type="button" class="btn" data-act="concept-merge" data-id="${id}">合併到其他考點</button><button type="button" class="btn danger" data-act="concept-delete" data-id="${id}">刪除</button></div>`;
+}
+
+/* ---------- page: problem ---------- */
+function renderProblem(id) {
+  const p = PR[id];
+  if (!p) { app.innerHTML = `<p class="empty">這題已經被刪除了。</p><a class="btn" href="#/">回首頁</a>`; return; }
+  app.innerHTML = `<div class="crumb"><a href="#/" data-act="back">返回</a></div>
+  ${conceptPills(p)}
+  ${p.photoIds.length ? `<div class="photos">${p.photoIds.map(pid => `<img data-photo="${pid}" data-act="view-photo" alt="題目照片">`).join('')}</div>` : ''}
+  ${p.text ? `<h2>題目</h2><div class="ptext">${esc(p.text)}</div>` : ''}
+  ${p.source ? `<p class="muted" style="margin-top:10px">出處：${esc(p.source)}</p>` : ''}
+  <div class="sec-head"><h2>作答紀錄</h2><button type="button" class="btn small primary" data-act="attempt-add" data-id="${id}">再做一次</button></div>
+  <ol class="attempts">${[...p.attempts].reverse().map(attemptHTML).join('')}</ol>
+  <h2>整理這題</h2>
+  <div class="row wrap"><button type="button" class="btn" data-act="problem-concepts" data-id="${id}">調整考點</button><button type="button" class="btn" data-act="problem-edit" data-id="${id}">編輯題目</button><button type="button" class="btn danger" data-act="problem-delete" data-id="${id}">刪除</button></div>`;
+}
+
+/* ---------- page: add ---------- */
+const newDraft = () => ({ photos: [], reply: '', manual: '', cards: [], text: '', source: '', att: { status: null, errorTypes: [], reason: '' }, parseMsg: '' });
+let A = newDraft();
+function sanitizeDraft(d) {
+  if (!d || typeof d !== 'object') return newDraft();
+  const x = Object.assign(newDraft(), d);
+  x.att = Object.assign({ status: null, errorTypes: [], reason: '' }, d.att || {});
+  x.photos = (d.photos || []).filter(b => b instanceof Blob);
+  x.cards = (d.cards || []).filter(c => c.mode === 'new' || CO[c.conceptId]);
+  return x;
+}
+let draftTimer;
+function saveDraft() { clearTimeout(draftTimer); draftTimer = setTimeout(() => dbPut('meta', { key: 'draft', value: A }).catch(() => {}), 400); }
+function renderAdd() {
+  if (mustInstall()) { app.innerHTML = `<h1>先加入主畫面</h1><p>為了不讓筆記遺失，新增題目只能在主畫面的 App 裡進行。</p>${installSteps()}<p class="muted">已經加過了？關掉這個 Safari 分頁，改從主畫面的圖示打開。</p>`; return; }
+  app.innerHTML = `<h1>新增題目</h1>
+  <section class="step"><h2><span class="n">1</span>讓 GPT 看題目</h2><p class="muted">複製提示詞，連同題目照片一起傳給 GPT。提示詞裡附了你目前所有的考點，GPT 會優先從裡面挑。</p><div class="row"><button type="button" class="btn primary" data-act="copy-prompt">複製提示詞</button><button type="button" class="btn ghost" data-act="show-prompt">看內容</button></div></section>
+  <section class="step"><h2><span class="n">2</span>題目照片</h2><div id="add-photos"></div></section>
+  <section class="step"><h2><span class="n">3</span>貼上 GPT 的回覆</h2><textarea id="add-reply" placeholder="把 GPT 回覆的整段內容貼在這裡">${esc(A.reply)}</textarea><div class="row"><button type="button" class="btn" data-act="parse-reply">讀取回覆</button></div><p id="parse-msg" class="hint">${esc(A.parseMsg)}</p>
+    <details class="manual" ${A.manual ? 'open' : ''}><summary>不透過 GPT，直接輸入考點</summary><div class="row"><input id="add-manual" placeholder="例如：AVL 旋轉" value="${esc(A.manual)}" enterkeyhint="done"><button type="button" class="btn" data-act="manual-add">加入</button></div></details></section>
+  <section class="step"><h2><span class="n">4</span>確認考點歸類</h2><div id="add-cards"></div></section>
+  <section class="step"><h2><span class="n">5</span>題目文字與出處</h2><textarea id="add-text" placeholder="題目文字（選填）。貼了之後，搜尋得到題目內容。">${esc(A.text)}</textarea><div style="height:8px"></div><input id="add-source" list="dl-sources" placeholder="出處（選填），例如：台大 112" value="${esc(A.source)}"><datalist id="dl-sources">${distinctSources().map(x => `<option value="${esc(x)}">`).join('')}</datalist></section>
+  <section class="step"><h2><span class="n">6</span>這題你會嗎？</h2><div id="add-att"></div></section>
+  <p id="add-missing" class="missing"></p>
+  <button type="button" class="btn primary big" data-act="save-add" id="save-add">存檔</button>
+  <div class="row"><button type="button" class="btn ghost danger" data-act="discard-add">清空重來</button></div>`;
+  const reply = $('#add-reply');
+  reply.addEventListener('input', () => { A.reply = reply.value; saveDraft(); });
+  reply.addEventListener('paste', () => setTimeout(() => { A.reply = reply.value; doParse(true); }, 0));
+  $('#add-text').addEventListener('input', e => { A.text = e.target.value; saveDraft(); updateMissing(); });
+  $('#add-source').addEventListener('input', e => { A.source = e.target.value; saveDraft(); });
+  const man = $('#add-manual');
+  man.addEventListener('input', () => { A.manual = man.value; saveDraft(); });
+  man.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ACT['manual-add'](); } });
+  $('#add-cards').addEventListener('input', onCardInput);
+  $('#add-cards').addEventListener('change', onCardChange);
+  renderAddPhotos(); renderAddCards();
+  mountAF($('#add-att'), A.att, () => { saveDraft(); updateMissing(); });
+}
+function renderAddPhotos() {
+  const el = $('#add-photos'); if (!el) return;
+  el.innerHTML = `<div class="photo-grid">${A.photos.map((b, i) => `<div class="pg-item"><img src="${blobURL(b)}" alt="題目照片 ${i + 1}" data-act="view-blob" data-i="${i}"><button type="button" class="pg-x" data-act="photo-remove" data-i="${i}" aria-label="移除這張照片">×</button></div>`).join('')}<label class="pg-add"><input type="file" accept="image/*" multiple id="add-file" aria-label="拍照或選照片"><span>${A.photos.length ? '再加一張' : '拍照或<br>選照片'}</span></label></div>`;
+  $('#add-file').addEventListener('change', async e => {
+    const files = [...e.target.files]; if (!files.length) return;
+    toast('正在處理照片…');
+    for (const f of files) A.photos.push(await compressImage(f));
+    renderAddPhotos(); saveDraft(); updateMissing();
+  });
+}
+function cardHTML(card) {
+  const k = card.key;
+  if (card.mode === 'existing') {
+    const c = CO[card.conceptId]; const { s, ch } = conceptPath(c); const n = problemsOf(c.id).length;
+    const typed = card.input && norm(card.input) !== norm(c.name) ? `<span class="muted small">GPT 寫的是「${esc(card.input)}」，存檔後會記成這個考點的別名</span>` : '';
+    return `<div class="ccard ${card.confirmed ? 'done' : ''}"><div class="ccard-head">${card.confirmed ? '✓ 已確認' : '建議歸入既有考點'}</div>
+    <div class="ccard-path">${sch(s)}${esc(ch.name)} › <b>${esc(c.name)}</b></div><div class="muted small">已有 ${n} 題</div>${typed}
+    <div class="row wrap">${card.confirmed ? `<button type="button" class="btn small" data-act="card-change" data-key="${k}">改放別處</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button>`
+      : `<button type="button" class="btn small primary" data-act="card-confirm" data-key="${k}">就放這裡</button><button type="button" class="btn small" data-act="card-change" data-key="${k}">改放別處</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button>`}</div></div>`;
+  }
+  if (card.confirmed) {
+    const s = SUBJ[card.newSid]; const chName = card.newChapterId ? CH[card.newChapterId].name : `${card.newChapterName}（新章節）`;
+    return `<div class="ccard done"><div class="ccard-head">✓ 存檔時建立新考點</div><div class="ccard-path">${sch(s)}${esc(chName)} › <b>${esc(card.newName)}</b></div>
+    <div class="row wrap"><button type="button" class="btn small" data-act="card-unconfirm" data-key="${k}">修改</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button></div></div>`;
+  }
+  const cands = (card.candidates || []).map(id => CO[id]).filter(Boolean).slice(0, 3);
+  return `<div class="ccard"><div class="ccard-head">這是新考點，建議建立在：</div>
+  <label class="label" for="nn-${k}">考點名稱</label><input id="nn-${k}" data-card="${k}" data-f="newName" value="${esc(card.newName)}">
+  <div class="row2"><div><label class="label" for="ns-${k}">科目</label><select id="ns-${k}" data-card="${k}" data-f="newSid">${subjectOptions(card.newSid)}</select></div>
+  <div><label class="label" for="nc-${k}">章節</label><select id="nc-${k}" data-card="${k}" data-f="newChapterId">${chapterOptions(card.newSid, card.newChapterId, card.newChapterName)}</select></div></div>
+  ${cands.length ? `<span class="label">還是其實是這些既有考點？</span><div class="chips">${cands.map(c => `<button type="button" class="chip" data-act="card-use" data-key="${k}" data-id="${c.id}">${conceptPath(c).s.short}｜${esc(c.name)}</button>`).join('')}</div>` : ''}
+  <div class="row wrap"><button type="button" class="btn small primary" data-act="card-confirm" data-key="${k}" ${cardReadyNew(card) ? '' : 'disabled'}>建立並確認</button><button type="button" class="btn small" data-act="card-change" data-key="${k}">從所有考點挑</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button></div></div>`;
+}
+function renderAddCards() {
+  const el = $('#add-cards'); if (!el) return;
+  el.innerHTML = A.cards.length ? A.cards.map(cardHTML).join('') : `<p class="muted">讀取 GPT 的回覆，或直接輸入考點之後，會在這裡請你確認要歸到哪裡。</p>`;
+  updateMissing();
+}
+const findCard = k => A.cards.find(c => c.key === k);
+function onCardInput(e) {
+  const t = e.target; if (!t.dataset.card || t.dataset.f !== 'newName') return;
+  const card = findCard(t.dataset.card); card.newName = t.value;
+  const btn = t.closest('.ccard').querySelector('[data-act="card-confirm"]'); if (btn) btn.disabled = !cardReadyNew(card);
+  saveDraft();
+}
+function onCardChange(e) {
+  const t = e.target; if (!t.dataset.card) return;
+  const card = findCard(t.dataset.card);
+  if (t.dataset.f === 'newSid') { card.newSid = t.value; card.newChapterId = ''; card.newChapterName = ''; }
+  if (t.dataset.f === 'newChapterId') {
+    if (t.value === '__ask') { const n = prompt('新章節的名稱'); if (n && n.trim()) { card.newChapterId = ''; card.newChapterName = n.trim(); } }
+    else if (t.value === '__new') {}
+    else { card.newChapterId = t.value; card.newChapterName = ''; }
+  }
+  renderAddCards(); saveDraft();
+}
+function doParse(fromPaste) {
+  const r = parseReply(A.reply);
+  const msg = $('#parse-msg');
+  if (!r) {
+    if (fromPaste) return;
+    A.parseMsg = '讀不懂這段回覆。請確認貼上的是 GPT 的完整回覆（要有「===考點===」那一段），或改用下方的「直接輸入考點」。';
+    if (msg) { msg.textContent = A.parseMsg; msg.classList.add('err'); }
+    saveDraft(); return;
+  }
+  if (r.text) { A.text = r.text; const el = $('#add-text'); if (el) el.value = r.text; }
+  if (r.source) { A.source = r.source; const el = $('#add-source'); if (el) el.value = r.source; }
+  A.cards = A.cards.filter(c => c.from === 'manual').concat(r.concepts.map(x => makeCard(x, 'reply')));
+  A.parseMsg = r.concepts.length ? `讀到 ${r.concepts.length} 個考點，請在下方確認歸類。` : '回覆裡沒有讀到考點，請用下方的「直接輸入考點」補上。';
+  if (msg) { msg.textContent = A.parseMsg; msg.classList.toggle('err', !r.concepts.length); }
+  renderAddCards(); saveDraft();
+}
+function addProblemsList() {
+  const m = [];
+  if (!A.photos.length && !A.text.trim()) m.push('題目照片或題目文字');
+  if (!A.cards.length) m.push('至少一個考點');
+  else if (A.cards.some(c => !c.confirmed)) m.push('確認每個考點的歸類');
+  const e = attemptProblems(A.att); if (e) m.push(e);
+  return m;
+}
+function updateMissing() {
+  const el = $('#add-missing'), btn = $('#save-add'); if (!el) return;
+  const m = addProblemsList();
+  el.textContent = m.length ? `還差：${m.join('、')}` : '';
+  btn.disabled = m.length > 0;
+}
+async function saveAdd() {
+  if (addProblemsList().length) return;
+  const btn = $('#save-add'); btn.disabled = true; btn.textContent = '存檔中…';
+  const ids = [];
+  for (const card of A.cards) {
+    if (card.mode === 'existing') { const c = CO[card.conceptId]; await addAlias(c, card.input); ids.push(c.id); }
+    else ids.push(await createConcept({ name: card.newName, sid: card.newSid, chapterId: card.newChapterId, chapterName: card.newChapterName, alias: card.input }));
+  }
+  const conceptIds = [...new Set(ids)];
+  const photoIds = [];
+  for (const b of A.photos) { const id = uid(); await dbPut('photos', { id, blob: b }); photoIds.push(id); }
+  const t = now(), ok = A.att.status === 'ok';
+  const p = { id: uid(), conceptIds, photoIds, text: A.text.trim(), source: A.source.trim(), createdAt: t,
+    attempts: [{ at: t, status: A.att.status, errorTypes: ok ? [] : [...A.att.errorTypes], reason: ok ? '' : A.att.reason.trim(), via: 'add' }] };
+  S.problems.push(p); await dbPut('problems', p); reindex();
+  A = newDraft(); await dbDel('meta', 'draft').catch(() => {});
+  requestPersist();
+  const cs = conceptIds.map(id => CO[id]);
+  app.innerHTML = `<h1>存好了</h1><p class="lede">這題歸在：</p><div class="list">${cs.map(c => conceptRow(c)).join('')}</div>
+  <button type="button" class="btn primary big" data-act="add-another">再新增一題</button>`;
+  window.scrollTo(0, 0);
+}
+
+/* ---------- concept picker sheet ---------- */
+function openPicker({ title, query = '', allowNew = true, defSid = '', excludeId = null, onPick }) {
+  const nw = { name: query, sid: defSid, chId: '', chNew: '' };
+  openSheet(`<h2>${esc(title)}</h2><input id="pk-q" type="search" placeholder="搜尋既有考點" value="${esc(query)}" autocomplete="off"><div style="height:10px"></div><div id="pk-list" class="list"></div>
+  ${allowNew ? `<details id="pk-new" ${!S.concepts.length ? 'open' : ''}><summary>都不是，建立新考點</summary><div id="pk-new-body"></div></details>` : ''}`, body => {
+    const list = () => {
+      const q = $('#pk-q').value;
+      let items;
+      if (q.trim()) { const { sub, fz } = searchConcepts(q); items = sub.concat(fz); }
+      else {
+        const key = c => { const ch = CH[c.chapterId] || { order: 999, subject: 'zz' }; return `${SUBJECTS.findIndex(s => s.id === ch.subject)}|${String(ch.order).padStart(3, '0')}|${c.name}`; };
+        items = S.concepts.slice().sort((a, b) => key(a).localeCompare(key(b), 'zh-Hant'));
+      }
+      items = items.filter(c => c.id !== excludeId).slice(0, 50);
+      $('#pk-list').innerHTML = items.length ? items.map(c => { const { s, ch } = conceptPath(c); return `<button type="button" class="crow" data-pick="${c.id}" style="--sc:var(--s-${s.id})"><span class="crow-main"><span class="crow-name">${esc(c.name)}</span><span class="crow-path">${s.short} › ${esc(ch.name)}</span></span></button>`; }).join('')
+        : `<p class="muted">沒有符合的既有考點。${allowNew ? '可以在下方建立新考點。' : ''}</p>`;
+    };
+    const drawNew = () => {
+      const nb = $('#pk-new-body'); if (!nb) return;
+      nb.innerHTML = `<label class="label" for="pk-nn">考點名稱</label><input id="pk-nn" value="${esc(nw.name)}">
+      <div class="row2"><div><label class="label" for="pk-ns">科目</label><select id="pk-ns">${subjectOptions(nw.sid)}</select></div><div><label class="label" for="pk-nc">章節</label><select id="pk-nc">${chapterOptions(nw.sid, nw.chId, nw.chNew)}</select></div></div>
+      <button type="button" class="btn primary big" id="pk-create">建立這個考點</button>`;
+      $('#pk-nn').oninput = e => { nw.name = e.target.value; };
+      $('#pk-ns').onchange = e => { nw.sid = e.target.value; nw.chId = ''; nw.chNew = ''; drawNew(); };
+      $('#pk-nc').onchange = e => {
+        const v = e.target.value;
+        if (v === '__ask') { const n = prompt('新章節的名稱'); if (n && n.trim()) { nw.chId = ''; nw.chNew = n.trim(); } drawNew(); }
+        else if (v !== '__new') { nw.chId = v; nw.chNew = ''; }
+      };
+      $('#pk-create').onclick = () => {
+        if (!nw.name.trim() || !nw.sid || !(nw.chId || nw.chNew)) { toast('請填好名稱、科目和章節'); return; }
+        closeSheet(); onPick({ type: 'new', name: nw.name.trim(), sid: nw.sid, chapterId: nw.chId, chapterName: nw.chNew });
+      };
+    };
+    $('#pk-q').addEventListener('input', () => { if (!nw.name || nw.name === query) { nw.name = $('#pk-q').value; } list(); });
+    body.addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (b) { closeSheet(); onPick({ type: 'existing', id: b.dataset.pick }); } });
+    const det = $('#pk-new'); if (det) det.addEventListener('toggle', () => { if (det.open) drawNew(); });
+    list(); if (det && det.open) drawNew();
+  });
+}
+
+/* ---------- review ---------- */
+function problemScore(p) {
+  const w = { wrong: 3, unsure: 2, ok: 0.5 }[statusOf(p)];
+  const wrongs = p.attempts.filter(a => a.status === 'wrong').length;
+  const days = (now() - lastTouched(p)) / DAY;
+  return (w + 0.5 * Math.max(0, wrongs - 1)) * (1 + Math.min(days, 30) / 7);
+}
+function reviewPool(sid) {
+  const fresh = now() - 20 * 3600 * 1000;
+  let ps = S.problems.filter(p => lastTouched(p) < fresh);
+  if (sid) ps = ps.filter(p => p.conceptIds.some(id => CO[id] && subjectOfConcept(CO[id]) === sid));
+  return ps.sort((a, b) => problemScore(b) - problemScore(a));
+}
+let RV = { sid: '' };
+let R = null;
+function startSession(ids, label) { R = { ids, i: 0, revealed: false, st: { status: null, errorTypes: [], reason: '' }, tally: { ok: 0, unsure: 0, wrong: 0 }, label }; currentRoute = null; go('#/session'); }
+function renderReview() {
+  const pool = reviewPool(RV.sid);
+  const byC = new Map();
+  pool.forEach(p => p.conceptIds.forEach(id => { if (!CO[id]) return; if (RV.sid && subjectOfConcept(CO[id]) !== RV.sid) return; const e = byC.get(id) || { score: 0, ps: [] }; e.score += problemScore(p); e.ps.push(p); byC.set(id, e); }));
+  const top = [...byC.entries()].sort((a, b) => b[1].score - a[1].score).slice(0, 12);
+  const why = (c, e) => { const w = e.ps.filter(p => statusOf(p) === 'wrong').length, u = e.ps.filter(p => statusOf(p) === 'unsure').length; const last = Math.max(c.lastReviewedAt || 0, ...e.ps.map(lastTouched)); return [w ? `${w} 題不會` : '', u ? `${u} 題不確定` : '', `上次做：${daysAgo(last)}`].filter(Boolean).join('，'); };
+  app.innerHTML = `<h1>複習</h1>
+  <p class="lede">${pool.length ? `有 ${pool.length} 題可以複習。錯越多、越久沒看的排越前面。` : S.problems.length ? '目前沒有要複習的題目。今天剛記錄或剛複習過的題目，明天才會排進來。' : '還沒有題目可以複習。'}</p>
+  <div class="chips">${[['', '全部'], ...SUBJECTS.map(s => [s.id, s.name])].map(([v, l]) => `<button type="button" class="chip ${RV.sid === v ? 'on' : ''}" data-act="rv-sid" data-v="${v}">${l}</button>`).join('')}</div>
+  ${pool.length ? `<button type="button" class="btn primary big" data-act="rv-start" data-n="10">開始複習 ${Math.min(10, pool.length)} 題</button>${pool.length > 10 ? `<div class="row"><button type="button" class="btn ghost" data-act="rv-start" data-n="${pool.length}">全部 ${pool.length} 題一起複習</button></div>` : ''}` : ''}
+  ${top.length ? `<h2>最該複習的考點</h2><div class="list">${top.map(([id, e]) => conceptRow(CO[id], why(CO[id], e))).join('')}</div>` : ''}`;
+}
+function renderSession() {
+  if (!R) { go('#/review'); return; }
+  if (R.i >= R.ids.length) {
+    const t = R.tally;
+    app.innerHTML = `<h1>這輪複習完了</h1><div class="tally"><div><b>${t.ok}</b>會</div><div><b>${t.unsure}</b>不確定</div><div><b>${t.wrong}</b>不會</div></div>
+    <p class="lede">${t.wrong + t.unsure ? '還不會的題目會繼續排在前面，明天再見。' : '全部都會了，很好。'}</p>
+    <a class="btn primary big" href="#/review">回到複習</a>`;
+    return;
+  }
+  const p = PR[R.ids[R.i]];
+  if (!p) { R.i++; renderSession(); return; }
+  const summaries = p.conceptIds.map(id => CO[id]).filter(c => c && c.summary);
+  app.innerHTML = `<div class="sess-top"><span>${esc(R.label)}</span><span>${R.i + 1} / ${R.ids.length}</span></div><div class="progress"><i style="width:${R.i / R.ids.length * 100}%"></i></div>
+  ${conceptPills(p)}
+  ${p.photoIds.length ? `<div class="photos">${p.photoIds.map(pid => `<img data-photo="${pid}" data-act="view-photo" alt="題目照片">`).join('')}</div>` : ''}
+  ${p.text && !p.photoIds.length ? `<div class="ptext">${esc(p.text)}</div>` : ''}
+  ${!R.revealed ? `<p class="muted center" style="margin-top:16px">先在腦中或紙上把這題解一遍，想好再翻開。</p><button type="button" class="btn primary big" data-act="sess-reveal">翻開之前的紀錄</button>`
+    : `<section class="reveal"><h2>之前的紀錄</h2><ol class="attempts">${[...p.attempts].reverse().map(attemptHTML).join('')}</ol>
+      ${summaries.map(c => `<details><summary>${esc(c.name)} 的重點摘要</summary><div class="summary-body">${esc(c.summary)}</div></details>`).join('')}
+      <h2>這次呢？</h2><div id="sess-form"></div><p class="missing" id="sess-miss"></p><button type="button" class="btn primary big" id="sess-next" data-act="sess-next">記錄，下一題</button></section>`}
+  <div class="row"><button type="button" class="btn ghost" data-act="sess-skip">跳過這題</button><button type="button" class="btn ghost" data-act="sess-end">結束複習</button></div>`;
+  if (R.revealed) mountAF($('#sess-form'), R.st, () => { const e = attemptProblems(R.st); $('#sess-miss').textContent = e && R.st.status ? e : ''; $('#sess-next').disabled = !!e; });
+}
+async function recordAttempt(p, st, via) {
+  const ok = st.status === 'ok', t = now();
+  p.attempts.push({ at: t, status: st.status, errorTypes: ok ? [] : [...st.errorTypes], reason: ok ? '' : st.reason.trim(), via });
+  await dbPut('problems', p);
+  for (const id of p.conceptIds) { const c = CO[id]; if (c) { c.lastReviewedAt = t; await dbPut('concepts', c); } }
+}
+
+/* ---------- page: stats ---------- */
+function renderStats() {
+  const atts = S.problems.flatMap(p => p.attempts.filter(a => a.status !== 'ok'));
+  const tc = countTypes(atts); const total = tc.reduce((a, [, n]) => a + n, 0);
+  const cw = S.concepts.map(c => ({ c, n: problemsOf(c.id).reduce((a, p) => a + p.attempts.filter(x => x.status !== 'ok').length, 0) })).filter(x => x.n).sort((a, b) => b.n - a.n).slice(0, 6);
+  app.innerHTML = `<div class="crumb"><a href="#/more">更多</a></div><h1>統計</h1>
+  ${total ? `<h2>錯誤類型</h2><p class="lede">最常見的是「${esc(tc[0][0])}」。${TYPE_TIPS[tc[0][0]] || ''}</p>
+  <div class="bars">${tc.map(([t, n]) => `<div class="bar"><span>${esc(t)}</span><span class="bar-t"><i style="width:${n / tc[0][1] * 100}%"></i></span><span class="bar-n">${Math.round(n / total * 100)}%</span></div>`).join('')}</div>` : '<p class="empty">還沒有錯題紀錄，記下不會或不確定的題目後，這裡會出現錯誤類型的分析。</p>'}
+  <h2>各科狀況</h2>
+  <table class="subj"><thead><tr><th>科目</th><th>考點</th><th>題目</th><th>不會</th><th>不確定</th></tr></thead><tbody>
+  ${SUBJECTS.map(s => { const st = subjectStats(s.id); return `<tr><td style="--sc:var(--s-${s.id})"><span class="dot"></span>${s.name}</td><td>${st.concepts}</td><td>${st.problems}</td><td class="${st.wrong ? 't-wrong' : ''}">${st.wrong}</td><td class="${st.unsure ? 't-unsure' : ''}">${st.unsure}</td></tr>`; }).join('')}
+  </tbody></table>
+  ${cw.length ? `<h2>最常出錯的考點</h2><div class="list">${cw.map(x => conceptRow(x.c, `錯了 ${x.n} 次`)).join('')}</div>` : ''}`;
+}
+
+/* ---------- page: more (backup) ---------- */
+let BK = null;
+function renderMore() {
+  const last = S.meta.lastBackupAt;
+  app.innerHTML = `<h1>更多</h1>
+  <div class="panel"><h2>備份</h2>
+  <p class="muted">${last ? `上次備份：${fmtFull(last)}（${daysAgo(last)}）` : '還沒備份過。'}</p>
+  <p class="small muted">備份檔是一個 zip，裡面有所有題目、考點、錯因和照片。建議存到「檔案」App 裡的 iCloud 雲碟。</p>
+  ${BK ? `<p>備份檔準備好了：${esc(BK.name)}（${(BK.blob.size / 1048576).toFixed(1)} MB）</p><button type="button" class="btn primary big" data-act="backup-share">儲存備份檔</button>`
+    : `<button type="button" class="btn primary big" data-act="backup-prepare" ${S.problems.length ? '' : 'disabled'}>製作備份檔</button>`}
+  </div>
+  <div class="panel"><h2>從備份還原</h2><p class="small muted">換手機或資料不見時使用。還原會取代目前手機上的所有筆記。</p>
+  <label class="btn" style="position:relative;overflow:hidden">選擇備份檔<input type="file" id="restore-file" accept=".zip,application/zip" style="position:absolute;inset:0;opacity:0" ${mustInstall() ? 'disabled' : ''}></label></div>
+  <div class="panel"><h2>統計</h2><p class="small muted">各科題數、錯誤類型分布、最常出錯的考點。</p><a class="btn" href="#/stats">看統計</a></div>
+  <div class="panel"><h2>儲存空間</h2><p class="small muted" id="storage-info">計算中…</p></div>
+  <div class="panel"><h2>清除所有資料</h2><p class="small muted">刪除這支手機上的所有筆記和照片，無法復原。清除前請先備份。</p><button type="button" class="btn danger" data-act="wipe">清除所有資料</button></div>
+  <p class="small muted center">考點筆記 ${APP_VERSION}</p>`;
+  $('#restore-file').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) restoreFrom(f); });
+  (async () => {
+    let txt = '';
+    try { if (navigator.storage && navigator.storage.estimate) { const est = await navigator.storage.estimate(); txt += `目前用了約 ${(est.usage / 1048576).toFixed(1)} MB。`; } } catch (e) {}
+    try { if (navigator.storage && navigator.storage.persisted) txt += (await navigator.storage.persisted()) ? '已啟用持久儲存，系統不會自動清掉資料。' : '尚未啟用持久儲存。從主畫面開啟並存過一題後會自動申請。'; } catch (e) {}
+    const el = $('#storage-info'); if (el) el.textContent = txt || '這個瀏覽器無法查詢儲存空間。';
+  })();
+}
+
+/* zip (stored, no compression; photos are already JPEG) */
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(buf) { let c = 0xFFFFFFFF; for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+async function makeZip(entries) {
+  const enc = new TextEncoder(); const d = new Date();
+  const dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  const parts = [], central = []; let offset = 0;
+  for (const e of entries) {
+    const name = enc.encode(e.name);
+    const bytes = e.data instanceof Blob ? new Uint8Array(await e.data.arrayBuffer()) : e.data;
+    const crc = crc32(bytes), size = bytes.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, dosTime, true); lh.setUint16(12, dosDate, true); lh.setUint32(14, crc, true);
+    lh.setUint32(18, size, true); lh.setUint32(22, size, true); lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+    parts.push(lh.buffer, name, e.data instanceof Blob ? e.data : bytes);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, dosTime, true); ch.setUint16(14, dosDate, true); ch.setUint32(16, crc, true); ch.setUint32(20, size, true); ch.setUint32(24, size, true);
+    ch.setUint16(28, name.length, true); ch.setUint16(30, 0, true); ch.setUint16(32, 0, true); ch.setUint16(34, 0, true); ch.setUint16(36, 0, true);
+    ch.setUint32(38, 0, true); ch.setUint32(42, offset, true);
+    central.push(ch.buffer, name);
+    offset += 30 + name.length + size;
+  }
+  const cdSize = central.reduce((a, b) => a + b.byteLength, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, entries.length, true); end.setUint16(10, entries.length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, end.buffer], { type: 'application/zip' });
+}
+async function readZip(file) {
+  const tailLen = Math.min(file.size, 65557);
+  const tail = new Uint8Array(await file.slice(file.size - tailLen).arrayBuffer());
+  let eo = -1;
+  for (let i = tail.length - 22; i >= 0; i--) if (tail[i] === 0x50 && tail[i + 1] === 0x4b && tail[i + 2] === 0x05 && tail[i + 3] === 0x06) { eo = i; break; }
+  if (eo < 0) throw new Error('這不是有效的 zip 檔。');
+  const dv = new DataView(tail.buffer, eo);
+  const count = dv.getUint16(10, true), cdSize = dv.getUint32(12, true), cdOff = dv.getUint32(16, true);
+  const cd = new DataView(await file.slice(cdOff, cdOff + cdSize).arrayBuffer());
+  const dec = new TextDecoder(); const map = new Map(); let o = 0;
+  for (let k = 0; k < count && o + 46 <= cd.byteLength; k++) {
+    if (cd.getUint32(o, true) !== 0x02014b50) break;
+    const method = cd.getUint16(o + 10, true), csize = cd.getUint32(o + 20, true);
+    const nlen = cd.getUint16(o + 28, true), xlen = cd.getUint16(o + 30, true), clen = cd.getUint16(o + 32, true), lho = cd.getUint32(o + 42, true);
+    const name = dec.decode(new Uint8Array(cd.buffer, cd.byteOffset + o + 46, nlen));
+    o += 46 + nlen + xlen + clen;
+    map.set(name, async () => {
+      const lh = new DataView(await file.slice(lho, lho + 30).arrayBuffer());
+      const start = lho + 30 + lh.getUint16(26, true) + lh.getUint16(28, true);
+      const raw = file.slice(start, start + csize);
+      if (method === 0) return raw;
+      if (method === 8 && typeof DecompressionStream !== 'undefined') return await new Response(raw.stream().pipeThrough(new DecompressionStream('deflate-raw'))).blob();
+      throw new Error('這個 zip 用了無法讀取的壓縮方式，請用 App 匯出的原始備份檔。');
+    });
+  }
+  const dataKey = [...map.keys()].find(k => k === 'data.json' || k.endsWith('/data.json'));
+  const prefix = dataKey ? dataKey.slice(0, dataKey.length - 'data.json'.length) : '';
+  return { get: n => map.get(prefix + n), hasData: !!dataKey };
+}
+function buildOverviewMD() {
+  const L = [`# 考點筆記總覽`, ``, `匯出時間：${new Date().toLocaleString('zh-TW')}　共 ${S.problems.length} 題、${S.concepts.length} 個考點`, ``];
+  for (const s of SUBJECTS) {
+    const chs = chaptersOf(s.id).filter(ch => conceptsOfChapter(ch.id).length); if (!chs.length) continue;
+    L.push(`## ${s.name}`, '');
+    for (const ch of chs) {
+      L.push(`### ${ch.name}`, '');
+      for (const c of conceptsOfChapter(ch.id)) {
+        L.push(`#### ${c.name}`);
+        if ((c.aliases || []).length) L.push(`別名：${c.aliases.join('、')}`);
+        if (c.summary) L.push('', '重點摘要：', c.summary);
+        L.push('');
+        for (const p of problemsOf(c.id)) {
+          L.push(`- 題目 ${p.id.slice(0, 8)}${p.source ? `（${p.source}）` : ''}，目前狀態：${STATUS[statusOf(p)].label}${p.photoIds.length ? `，照片：${p.photoIds.map(x => `photos/${x}.jpg`).join('、')}` : ''}`);
+          if (p.text) L.push(`  - 題目文字：${p.text.replace(/\n/g, ' ')}`);
+          p.attempts.forEach(a => L.push(`  - ${fmtFull(a.at)} ${STATUS[a.status].label}${(a.errorTypes || []).length ? `［${a.errorTypes.join('、')}］` : ''}${a.reason ? `：${a.reason.replace(/\n/g, ' ')}` : ''}`));
+        }
+        L.push('');
+      }
+    }
+  }
+  return L.join('\n');
+}
+async function prepareBackup(btn) {
+  btn.disabled = true; btn.textContent = '正在打包…';
+  try {
+    const photos = await dbAll('photos'); const used = new Set(S.problems.flatMap(p => p.photoIds));
+    const data = { app: 'kaodian-notebook', format: 1, appVersion: APP_VERSION, exportedAt: new Date().toISOString(),
+      subjects: SUBJECTS.map(({ id, name }) => ({ id, name })), chapters: S.chapters, concepts: S.concepts, problems: S.problems };
+    const enc = new TextEncoder();
+    const entries = [{ name: 'data.json', data: enc.encode(JSON.stringify(data, null, 1)) }, { name: '筆記總覽.md', data: enc.encode(buildOverviewMD()) },
+      ...photos.filter(ph => used.has(ph.id)).map(ph => ({ name: `photos/${ph.id}.jpg`, data: ph.blob }))];
+    const blob = await makeZip(entries); const d = new Date();
+    BK = { blob, name: `考點筆記備份_${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.zip` };
+  } catch (e) { alert('打包失敗：' + e.message); }
+  renderMore();
+}
+async function shareBackup() {
+  const file = new File([BK.blob], BK.name, { type: 'application/zip' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file] }); }
+    catch (e) { if (e.name === 'AbortError') return; alert('無法開啟分享選單：' + e.message); return; }
+  } else {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = BK.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  }
+  await setMeta('lastBackupAt', now()); BK = null; renderMore(); toast('已備份');
+}
+async function restoreFrom(file) {
+  if (mustInstall()) { alert('請先把 App 加入主畫面，再從主畫面開啟後還原。'); return; }
+  try {
+    const zip = await readZip(file);
+    if (!zip.hasData) throw new Error('找不到 data.json，這不是考點筆記的備份檔。');
+    const data = JSON.parse(await (await zip.get('data.json')()).text());
+    if (data.app !== 'kaodian-notebook' || !Array.isArray(data.problems)) throw new Error('這不是考點筆記的備份檔。');
+    if (!confirm(`這份備份有 ${data.problems.length} 題、${data.concepts.length} 個考點（${String(data.exportedAt).slice(0, 10)}）。\n還原會取代目前手機上的 ${S.problems.length} 題，確定要還原嗎？`)) return;
+    toast('正在還原…');
+    const photos = []; let missing = 0;
+    for (const p of data.problems) for (const pid of p.photoIds || []) {
+      const g = zip.get(`photos/${pid}.jpg`);
+      if (g) photos.push({ id: pid, blob: new Blob([await g()], { type: 'image/jpeg' }) }); else missing++;
+    }
+    await dbClearAll();
+    await dbPutMany('chapters', data.chapters); await dbPutMany('concepts', data.concepts); await dbPutMany('problems', data.problems);
+    if (photos.length) await dbPutMany('photos', photos);
+    await dbPut('meta', { key: 'seeded', value: true });
+    await dbPut('meta', { key: 'lastBackupAt', value: Date.parse(data.exportedAt) || now() });
+    urlCache.forEach(u => URL.revokeObjectURL(u)); urlCache.clear();
+    await loadAll(); A = newDraft(); BK = null;
+    requestPersist();
+    alert(`已還原 ${data.problems.length} 題。${missing ? `\n有 ${missing} 張照片在備份檔裡找不到。` : ''}`);
+    currentRoute = null; go('#/');
+  } catch (e) { alert('還原失敗：' + e.message); }
+}
+
+/* ---------- actions ---------- */
+const ACT = {
+  'back': () => { if (history.length > 1) history.back(); else go('#/'); },
+  'sheet-close': () => closeSheet(),
+  'viewer-close': () => { $('#viewer').classList.remove('open'); document.body.classList.remove('noscroll'); },
+  'view-photo': (d, el) => { if (el.src) openViewer(el.src); },
+  'view-blob': (d) => { const b = A.photos[+d.i]; if (b) openViewer(blobURL(b)); },
+
+  'copy-prompt': async () => {
+    const text = buildPrompt();
+    if (await copyText(text)) toast('已複製提示詞，貼到 GPT 並附上題目照片');
+    else ACT['show-prompt']();
+  },
+  'show-prompt': () => openSheet(`<h2>提示詞</h2><p class="muted small">如果複製按鈕沒反應，長按下面的文字選取全部後複製。</p><div class="prompt-pre">${esc(buildPrompt())}</div>`),
+  'parse-reply': () => { A.reply = $('#add-reply').value; doParse(false); },
+  'manual-add': () => {
+    const el = $('#add-manual'); const v = (el.value || '').trim();
+    if (!v) { toast('先輸入考點'); return; }
+    A.cards.push(makeCard({ name: v }, 'manual')); A.manual = ''; el.value = '';
+    renderAddCards(); saveDraft();
+  },
+  'photo-remove': (d) => { A.photos.splice(+d.i, 1); renderAddPhotos(); saveDraft(); updateMissing(); },
+  'card-confirm': (d) => { const c = findCard(d.key); if (c.mode === 'new' && !cardReadyNew(c)) { toast('請填好名稱、科目和章節'); return; } c.confirmed = true; renderAddCards(); saveDraft(); },
+  'card-unconfirm': (d) => { findCard(d.key).confirmed = false; renderAddCards(); saveDraft(); },
+  'card-remove': (d) => { A.cards = A.cards.filter(c => c.key !== d.key); renderAddCards(); saveDraft(); },
+  'card-use': (d) => { const c = findCard(d.key); Object.assign(c, { mode: 'existing', conceptId: d.id, confirmed: true }); renderAddCards(); saveDraft(); },
+  'card-change': (d) => {
+    const card = findCard(d.key);
+    openPicker({ title: '歸到哪個考點？', query: card.input || card.newName || '', defSid: card.newSid || '', onPick: r => {
+      if (r.type === 'existing') Object.assign(card, { mode: 'existing', conceptId: r.id, confirmed: true });
+      else Object.assign(card, { mode: 'new', newName: r.name, newSid: r.sid, newChapterId: r.chapterId, newChapterName: r.chapterName, confirmed: true });
+      renderAddCards(); saveDraft();
+    } });
+  },
+  'af-status': (d) => { AF.st.status = d.v; AF.redraw(); },
+  'af-type': (d) => { const a = AF.st.errorTypes; const i = a.indexOf(d.v); if (i >= 0) a.splice(i, 1); else a.push(d.v); AF.redraw(); },
+  'save-add': () => saveAdd(),
+  'add-another': () => { currentRoute = null; renderAdd(); window.scrollTo(0, 0); },
+  'discard-add': async () => { if (!confirm('清空這一題目前填的所有內容？')) return; A = newDraft(); await dbDel('meta', 'draft').catch(() => {}); renderAdd(); },
+
+  'pf-status': (d) => { PF.status = d.v; render(); },
+  'chapter-add': async (d) => { const n = prompt('新章節的名稱'); if (n && n.trim()) { await createChapter(d.sid, n.trim()); render(); toast('已新增章節'); } },
+  'chapter-rename': async (d) => { const ch = CH[d.id]; const n = prompt('章節名稱', ch.name); if (n && n.trim() && n.trim() !== ch.name) { ch.name = n.trim(); await dbPut('chapters', ch); render(); } },
+  'chapter-delete': async (d) => { const ch = CH[d.id]; if (conceptsOfChapter(ch.id).length) return; if (!confirm(`刪除章節「${ch.name}」？`)) return; S.chapters = S.chapters.filter(x => x.id !== ch.id); await dbDel('chapters', ch.id); reindex(); render(); },
+
+  'copy-summary-prompt': async (d) => { if (await copyText(buildSummaryPrompt(CO[d.id]))) toast('已複製，貼到 GPT，再把結果貼回來'); else openSheet(`<h2>摘要提示詞</h2><div class="prompt-pre">${esc(buildSummaryPrompt(CO[d.id]))}</div>`); },
+  'summary-edit': (d) => {
+    const c = CO[d.id];
+    openSheet(`<h2>${esc(c.name)} 的重點摘要</h2><p class="muted small">可以貼上 GPT 的草稿，再改成自己記得住的說法。</p><textarea id="sum-ta" style="min-height:40vh">${esc(c.summary || '')}</textarea><button type="button" class="btn primary big" id="sum-save">儲存摘要</button>`, () => {
+      $('#sum-save').onclick = async () => { c.summary = $('#sum-ta').value.trim(); await dbPut('concepts', c); closeSheet(); render(); toast('已儲存摘要'); };
+    });
+  },
+  'review-concept': (d) => { const ps = problemsOf(d.id).sort((a, b) => problemScore(b) - problemScore(a)); startSession(ps.map(p => p.id), CO[d.id].name); },
+  'concept-rename': async (d) => {
+    const c = CO[d.id]; const n = prompt('考點名稱', c.name);
+    if (!n || !n.trim() || n.trim() === c.name) return;
+    const old = c.name; c.name = n.trim(); c.aliases = (c.aliases || []).filter(a => norm(a) !== norm(c.name));
+    if (!c.aliases.some(a => norm(a) === norm(old))) c.aliases.push(old);
+    await dbPut('concepts', c); render(); toast('已改名，舊名稱記成別名');
+  },
+  'concept-aliases': (d) => {
+    const c = CO[d.id];
+    openSheet(`<h2>別名</h2><p class="muted small">一行一個。歸類和搜尋時，別名和正式名稱一樣有效。</p><textarea id="al-ta">${esc((c.aliases || []).join('\n'))}</textarea><button type="button" class="btn primary big" id="al-save">儲存別名</button>`, () => {
+      $('#al-save').onclick = async () => { c.aliases = [...new Set($('#al-ta').value.split('\n').map(x => x.trim()).filter(x => x && norm(x) !== norm(c.name)))]; await dbPut('concepts', c); closeSheet(); render(); };
+    });
+  },
+  'concept-move': (d) => {
+    const c = CO[d.id]; const st = { sid: subjectOfConcept(c), chId: c.chapterId, chNew: '' };
+    openSheet(`<h2>移到其他章節</h2><div id="mv-body"></div>`, () => {
+      const draw = () => {
+        $('#mv-body').innerHTML = `<label class="label" for="mv-s">科目</label><select id="mv-s">${subjectOptions(st.sid)}</select><label class="label" for="mv-c">章節</label><select id="mv-c">${chapterOptions(st.sid, st.chId, st.chNew)}</select><button type="button" class="btn primary big" id="mv-save">移過去</button>`;
+        $('#mv-s').onchange = e => { st.sid = e.target.value; st.chId = ''; st.chNew = ''; draw(); };
+        $('#mv-c').onchange = e => { const v = e.target.value; if (v === '__ask') { const n = prompt('新章節的名稱'); if (n && n.trim()) { st.chId = ''; st.chNew = n.trim(); } draw(); } else if (v !== '__new') { st.chId = v; st.chNew = ''; } };
+        $('#mv-save').onclick = async () => { if (!st.sid || !(st.chId || st.chNew)) { toast('請選科目和章節'); return; } c.chapterId = st.chId || await createChapter(st.sid, st.chNew); await dbPut('concepts', c); reindex(); closeSheet(); render(); toast('已移動'); };
+      };
+      draw();
+    });
+  },
+  'concept-merge': (d) => {
+    const src = CO[d.id];
+    openPicker({ title: `把「${src.name}」合併到…`, allowNew: false, excludeId: src.id, onPick: async r => {
+      const dst = CO[r.id]; const ps = problemsOf(src.id);
+      if (!confirm(`把「${src.name}」的 ${ps.length} 題併入「${dst.name}」？\n「${src.name}」會變成「${dst.name}」的別名。`)) return;
+      for (const p of ps) { p.conceptIds = [...new Set(p.conceptIds.map(id => id === src.id ? dst.id : id))]; await dbPut('problems', p); }
+      dst.aliases = [...new Set([...(dst.aliases || []), src.name, ...(src.aliases || [])])].filter(a => norm(a) !== norm(dst.name));
+      if (src.summary) dst.summary = dst.summary ? `${dst.summary}\n\n（以下合併自「${src.name}」）\n${src.summary}` : src.summary;
+      await dbPut('concepts', dst);
+      S.concepts = S.concepts.filter(x => x.id !== src.id); await dbDel('concepts', src.id); reindex();
+      toast('已合併'); go(`#/concept/${dst.id}`);
+    } });
+  },
+  'concept-delete': async (d) => {
+    const c = CO[d.id]; const n = problemsOf(c.id).length;
+    if (n) { alert(`「${c.name}」底下還有 ${n} 題，不能直接刪除。\n如果它和別的考點重複，請用「合併到其他考點」。`); return; }
+    if (!confirm(`刪除考點「${c.name}」？`)) return;
+    S.concepts = S.concepts.filter(x => x.id !== c.id); await dbDel('concepts', c.id); reindex(); go('#/browse');
+  },
+
+  'attempt-add': (d) => {
+    const p = PR[d.id]; const st = { status: null, errorTypes: [], reason: '' };
+    openSheet(`<h2>再做一次</h2><p class="muted">這次做得如何？</p><div id="att-form"></div><p class="missing" id="att-miss"></p><button type="button" class="btn primary big" id="att-save" disabled>記錄</button>`, () => {
+      mountAF($('#att-form'), st, () => { const e = attemptProblems(st); $('#att-miss').textContent = st.status ? e : ''; $('#att-save').disabled = !!e; });
+      $('#att-save').onclick = async () => { if (attemptProblems(st)) return; await recordAttempt(p, st, 'retry'); closeSheet(); render(); toast('已記錄'); };
+    });
+  },
+  'problem-edit': (d) => {
+    const p = PR[d.id]; const keep = [...p.photoIds]; const added = [];
+    openSheet(`<h2>編輯題目</h2><span class="label">照片</span><div id="pe-photos"></div><label class="label" for="pe-text">題目文字</label><textarea id="pe-text">${esc(p.text)}</textarea><label class="label" for="pe-src">出處</label><input id="pe-src" value="${esc(p.source)}"><button type="button" class="btn primary big" id="pe-save">儲存變更</button>`, () => {
+      const draw = () => {
+        $('#pe-photos').innerHTML = `<div class="photo-grid">${keep.map((id, i) => `<div class="pg-item"><img data-photo="${id}" alt=""><button type="button" class="pg-x" data-pe-del="k${i}" aria-label="移除">×</button></div>`).join('')}${added.map((b, i) => `<div class="pg-item"><img src="${blobURL(b)}" alt=""><button type="button" class="pg-x" data-pe-del="a${i}" aria-label="移除">×</button></div>`).join('')}<label class="pg-add"><input type="file" accept="image/*" multiple id="pe-file"><span>加照片</span></label></div>`;
+        hydratePhotos($('#pe-photos'));
+        $('#pe-file').onchange = async e => { for (const f of e.target.files) added.push(await compressImage(f)); draw(); };
+        $$('[data-pe-del]').forEach(b => b.onclick = () => { const v = b.dataset.peDel; if (v[0] === 'k') keep.splice(+v.slice(1), 1); else added.splice(+v.slice(1), 1); draw(); });
+      };
+      draw();
+      $('#pe-save').onclick = async () => {
+        const text = $('#pe-text').value.trim();
+        if (!keep.length && !added.length && !text) { toast('至少要有一張照片或題目文字'); return; }
+        for (const id of p.photoIds) if (!keep.includes(id)) await dbDel('photos', id);
+        const newIds = []; for (const b of added) { const id = uid(); await dbPut('photos', { id, blob: b }); newIds.push(id); }
+        p.photoIds = [...keep, ...newIds]; p.text = text; p.source = $('#pe-src').value.trim();
+        await dbPut('problems', p); closeSheet(); render(); toast('已儲存');
+      };
+    });
+  },
+  'problem-concepts': (d) => {
+    const p = PR[d.id];
+    const open = () => openSheet(`<h2>這題的考點</h2><div class="list">${p.conceptIds.map(id => CO[id]).filter(Boolean).map(c => { const { s, ch } = conceptPath(c); return `<div class="crow" style="--sc:var(--s-${s.id})"><span class="crow-main"><span class="crow-name">${esc(c.name)}</span><span class="crow-path">${s.short} › ${esc(ch.name)}</span></span>${p.conceptIds.length > 1 ? `<button type="button" class="btn ghost small danger" data-pc-del="${c.id}">移除</button>` : ''}</div>`; }).join('')}</div><button type="button" class="btn big" id="pc-add">加入考點</button>`, body => {
+      body.addEventListener('click', async e => { const b = e.target.closest('[data-pc-del]'); if (!b) return; p.conceptIds = p.conceptIds.filter(x => x !== b.dataset.pcDel); await dbPut('problems', p); open(); render(); });
+      $('#pc-add').onclick = () => openPicker({ title: '加入哪個考點？', onPick: async r => { const id = await resolvePick(r); if (!p.conceptIds.includes(id)) p.conceptIds.push(id); await dbPut('problems', p); render(); open(); } });
+    });
+    open();
+  },
+  'problem-delete': async (d) => {
+    const p = PR[d.id]; if (!confirm('刪除這題和它的照片、作答紀錄？')) return;
+    for (const id of p.photoIds) await dbDel('photos', id);
+    S.problems = S.problems.filter(x => x.id !== p.id); await dbDel('problems', p.id); reindex();
+    toast('已刪除'); if (history.length > 1) history.back(); else go('#/');
+  },
+
+  'rv-sid': (d) => { RV.sid = d.v; render(); },
+  'rv-start': (d) => { const pool = reviewPool(RV.sid).slice(0, +d.n); const l = RV.sid ? SUBJ[RV.sid].name : '全部科目'; startSession(pool.map(p => p.id), l); },
+  'sess-reveal': () => { R.revealed = true; renderSession(); hydratePhotos(app); },
+  'sess-next': async () => {
+    if (attemptProblems(R.st)) return;
+    const p = PR[R.ids[R.i]]; await recordAttempt(p, R.st, 'review');
+    R.tally[R.st.status]++; R.i++; R.revealed = false; R.st = { status: null, errorTypes: [], reason: '' };
+    renderSession(); hydratePhotos(app); window.scrollTo(0, 0);
+  },
+  'sess-skip': () => { R.i++; R.revealed = false; R.st = { status: null, errorTypes: [], reason: '' }; renderSession(); hydratePhotos(app); window.scrollTo(0, 0); },
+  'sess-end': () => { R.i = R.ids.length; renderSession(); },
+
+  'backup-prepare': (d, el) => prepareBackup(el),
+  'backup-share': () => shareBackup(),
+  'wipe': async () => {
+    const v = prompt('這會刪除所有筆記和照片，而且無法復原。\n確定的話，請輸入「清除」兩個字。');
+    if (v !== '清除') return;
+    await dbClearAll(); urlCache.clear(); await loadAll(); A = newDraft(); toast('已清除所有資料'); go('#/');
+  },
+};
+
+document.addEventListener('click', async e => {
+  const a = e.target.closest('a[href^="#"]');
+  if (a && !a.dataset.act && a.getAttribute('href') === (location.hash || '#/')) { e.preventDefault(); currentRoute = null; render(); return; }
+  const el = e.target.closest('[data-act]'); if (!el || el.disabled) return;
+  const fn = ACT[el.dataset.act]; if (!fn) return;
+  e.preventDefault();
+  try { await fn(el.dataset, el, e); } catch (err) { console.error(err); alert('發生錯誤：' + (err && err.message || err)); }
+});
+document.addEventListener('focusin', e => { if (e.target.matches('input:not([type=file]),textarea,select')) document.body.classList.add('typing'); });
+document.addEventListener('focusout', () => setTimeout(() => { if (!document.activeElement || !document.activeElement.matches('input:not([type=file]),textarea,select')) document.body.classList.remove('typing'); }, 50));
+
+async function init() {
+  try {
+    db = await openDB();
+    await loadAll();
+    A = sanitizeDraft(S.meta.draft);
+  } catch (e) {
+    app.innerHTML = `<h1>無法開啟筆記資料庫</h1><p>${esc(e && e.message || e)}</p><p class="muted">如果正在使用 Safari 的無痕瀏覽，請改用一般模式，或從主畫面的圖示開啟。</p>`;
+    return;
+  }
+  render();
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if (isStandalone() && S.problems.length) requestPersist();
+}
+init();
+</script>
+</body>
+</html>
