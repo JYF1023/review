@@ -8,7 +8,9 @@
 
 - 純前端靜態網頁（PWA），**沒有後端、沒有外部相依、不呼叫任何 AI API**。
 - 所有資料存在使用者 iPhone 瀏覽器的 **IndexedDB**，不會上傳到任何地方。
-- 使用者用自己的 GPT 辨識題目照片；App 負責歸類確認、查找、複習與備份。
+- 使用者用自己的 GPT 把題目照片轉成文字並判斷考點；App 負責歸類確認、查找、複習與備份。
+- 主要用法是**批次匯入**：一次把十幾張題目照片丟給 GPT，GPT 回覆一大段固定格式的文字，貼回 App 後一題一題快速確認。另有單題新增模式。
+- 題目以**文字**為主，圖用 ASCII 或文字結構表示；只有 ASCII 表達不了的圖才需要附照片。
 - 目標裝置：**iPhone 的 Safari，加入主畫面後使用**。
 
 ## 檔案
@@ -58,10 +60,10 @@ App 會偵測自己是不是從主畫面開啟；在 Safari 分頁裡開時，�
 ## 更新 App（修改程式之後）
 
 1. 修改 `index.html`。
-2. 把 `sw.js` 第一行附近的 `CACHE = 'kaodian-v1'` 版本號加一（例如改成 `kaodian-v2`），確保手機會拿到新版。
+2. 把 `sw.js` 裡的 `CACHE = 'kaodian-v2'` 版本號加一（例如改成 `kaodian-v3`），確保手機會拿到新版。
 3. 部署到**同一個網站**：
    - Netlify：進入該網站 → Deploys → 把整個資料夾拖到頁面上的上傳區。
-   - GitHub Pages：commit 並 push 到同一個 repo。
+   - GitHub Pages：commit 並 push 到同一個 repo；或在網頁上 Add file → Upload files，上傳同名檔案就會覆蓋。
 4. 使用者在 iPhone 上完全關掉 App 再重新開啟，就是新版。筆記資料不受影響。
 
 ## 驗收步驟
@@ -69,8 +71,8 @@ App 會偵測自己是不是從主畫面開啟；在 Safari 分頁裡開時，�
 部署完成後，請使用者照著做一次。全部正常就代表部署成功：
 
 1. 從主畫面圖示開啟，首頁沒有出現紅色的「先加入主畫面」提示。
-2. 新增 → 複製提示詞 → 貼到 GPT 並附上一張題目照片 → 把 GPT 的回覆貼回 App → 按「讀取回覆」，下方出現考點歸類卡片。
-3. 確認歸類、選「不會」、選錯誤類型、寫錯因 → 存檔，出現「存好了」。
+2. 新增（批次匯入）→ 複製提示詞 → 貼到 GPT 並附上兩三張題目照片 → 點 GPT 回覆程式碼區塊的「複製」→ 回 App 按「貼上回覆」，出現「第 1 / N 題」。
+3. 第一題選「會」，自動跳到第二題；第二題選「不會」、選錯誤類型、寫錯因，按「存檔，下一題」。
 4. 回首頁搜尋剛剛的考點名稱，找得到。
 5. 更多 → 製作備份檔 → 儲存備份檔，跳出 iPhone 分享選單，能存到「檔案」。
 
@@ -91,9 +93,11 @@ IndexedDB 資料庫名稱 `kaodian-notebook`，版本 `1`，有五個 object sto
 
 **problems**（keyPath `id`）：題目
 ```js
-{ id, conceptIds: [id], photoIds: [id], text, source, createdAt,
+{ id, conceptIds: [id], photoIds: [id], text, source, needsPhoto: boolean, createdAt,
   attempts: [{ at, status: 'ok'|'unsure'|'wrong', errorTypes: [string], reason: string, via: 'add'|'retry'|'review' }] }
 ```
+- `text` 裡的圖用 `[圖]` … `[/圖]` 包起來（各自獨立一行），App 會以等寬字體、不換行、可左右捲動的方式顯示（`richText()`）。
+- `needsPhoto`：GPT 判斷 ASCII 無法完整表達這題的圖。`needsPhoto` 為真且沒有照片時，App 會在題目頁提醒，題目清單也能篩選「缺照片」。舊資料沒有這個欄位，視為 `false`。
 - 題目目前的狀態 = 最後一筆 attempt 的 `status`。
 - `status` 為 `unsure` 或 `wrong` 時，`errorTypes` 至少一項、`reason` 必填（App 會擋住太短或只寫「粗心」之類的錯因）。
 
@@ -106,14 +110,42 @@ IndexedDB 資料庫名稱 `kaodian-notebook`，版本 `1`，有五個 object sto
 ```js
 { key: 'seeded', value: true }        // 已建立章節骨架
 { key: 'lastBackupAt', value: ms }    // 上次備份時間
-{ key: 'draft', value: {...} }        // 新增到一半的草稿（含照片 blob）
+{ key: 'draft', value: {...} }        // 單題新增到一半的草稿（含照片 blob）
+{ key: 'batch', value: {...} }        // 批次匯入的進度：待確認的題目、已存/跳過數、是否「未完」
 ```
+另外 `localStorage` 的 `kd-add-mode` 記住新增頁上次選的是批次（`batch`）還是單題（`single`）。
 
 時間一律是毫秒時間戳（`Date.now()`）。
 
 ## 提示詞與回覆格式（改動時兩邊要一起改）
 
-`buildPrompt()` 產生給 GPT 的提示詞，內含目前所有考點與章節清單。`parseReply()` 解析 GPT 回覆，依賴這個格式：
+提示詞都內含目前所有考點與章節清單，以及「轉成文字的規則」（`PROMPT_FIGURE_RULES`：數學式不用 LaTeX、圖用 `[圖]` 包起來、圖論的圖用邊的清單、`[圖]` 內只用英數、ASCII 表達不了就標「需要照片：是」）。
+
+### 批次（`buildBatchPrompt()` ↔ `parseBatch()`）
+
+```
+===第1題===
+出處：台大 112
+需要照片：否
+考點：
+既有｜科目｜章節｜考點名稱
+新增｜科目｜章節｜考點名稱
+題目：
+題目文字，可以多行
+[圖]
+  ASCII
+[/圖]
+===第2題===
+…
+===全部結束===
+```
+
+- 「題目：」一定在每題最後，題目內容一直讀到下一個 `===第N題===` 或結束標記，所以題目可以很長、可以換行。
+- GPT 一次寫不完時，會在某題結束後寫 `===未完===`。使用者說「繼續」後把下一段貼進 App，App 會**接在目前這批後面**。
+- 同一題重複貼上（題號＋題目開頭相同）會被略過。
+- 如果貼上的是單題格式，`addBatchText()` 也會接受，當成一題。
+
+### 單題（`buildPrompt()` ↔ `parseReply()`）
 
 ```
 ===題目===
@@ -123,12 +155,17 @@ IndexedDB 資料庫名稱 `kaodian-notebook`，版本 `1`，有五個 object sto
 新增｜科目｜章節｜考點名稱
 ===出處===
 台大 112
+===需要照片===
+否
 ===結束===
 ```
 
 - 分隔符號接受全形「｜」或半形「|」，前後的等號數量不限，程式碼區塊標記會被忽略。
 - 科目可以寫全名或簡稱（資結、計組、OS、線代…），由 `matchSubject()` 對應。
-- 歸類由 `makeCard()` 決定：名稱或別名完全相同 → 直接建議既有考點；相似度 ≥ 0.72 → 也建議既有考點；否則建議建立新考點，並列出最多 3 個相近的既有考點讓使用者一鍵改選。**所有歸類都要使用者按確認才會存。**
+- 歸類由 `makeCard()` 決定：名稱或別名完全相同 → 既有考點；相似度 ≥ 0.72 → 也建議既有考點；否則建議建立新考點，並列出最多 3 個相近的既有考點讓使用者一鍵改選。
+- 單題模式：每個歸類都要使用者按確認。
+- 批次模式：建議直接顯示為已採用，使用者按下「會／不確定／不會」就代表接受，不對才按「改放別處」。新考點若缺科目或章節，必須先補好才能存。
+- 批次的歸類在**輪到那一題時**才計算，所以前面題目剛建立的新考點，後面題目會自動對上，不會重複建立。
 
 ## 備份檔格式
 
@@ -150,7 +187,10 @@ photos/<id>.jpg  // 題目照片，檔名對應 problems[].photoIds
 |---|---|
 | 預設章節骨架 | `SEED_CHAPTERS`（只在第一次開啟、資料庫是空的時候套用；已在使用中的 App 請直接在 App 裡新增或改名章節） |
 | 錯誤類型選項 | `ERROR_TYPES`，對應的建議文字在 `TYPE_TIPS` |
-| 給 GPT 的提示詞 | `buildPrompt()`、`buildSummaryPrompt()` |
+| 給 GPT 的提示詞 | `buildBatchPrompt()`、`buildPrompt()`、`buildSummaryPrompt()`，共用規則在 `PROMPT_CONCEPT_RULES`、`PROMPT_FIGURE_RULES` |
+| 回覆解析 | `parseBatch()`／`parseBatchItem()`、`parseReply()` |
+| 批次確認畫面 | `renderBatch()`、`saveBatchItem()` |
+| 圖的顯示 | `richText()` 與 CSS `.fig` |
 | 複習排序規則 | `problemScore()`（不會權重 3、不確定 2、會 0.5，乘上距離上次作答的天數因子）、`reviewPool()`（20 小時內做過的題目不排入） |
 | 錯因的最低要求 | `attemptProblems()` 與 `TRIVIAL` |
 | 自動建議既有考點的門檻 | `makeCard()` 裡的 `0.72` |

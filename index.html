@@ -156,6 +156,16 @@ input::placeholder,textarea::placeholder{color:var(--ink3)}
 .missing{color:var(--pen);font-size:14px;margin-top:16px;min-height:1em}
 details summary{cursor:pointer;color:var(--focus);padding:8px 0;font-size:15px}
 .manual{margin-top:6px}
+.fig{font-family:ui-monospace,Menlo,"SF Mono",Consolas,monospace;font-size:13px;line-height:1.35;white-space:pre;overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;tab-size:4;color:var(--ink)}
+.needphoto{border:1px solid var(--line);border-left:4px solid var(--amber);background:var(--paper);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}
+.needphoto .row{margin-bottom:0}
+.needphoto > b{display:block;margin-bottom:2px}
+.bq-top{display:flex;justify-content:space-between;font-size:14px;color:var(--ink2);margin-top:4px}
+.bq-photos{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.bq-photos .pg-item{width:84px}
+.filebtn{position:relative;overflow:hidden}
+.filebtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.summary-tally{margin:6px 0 4px}
 
 /* banners */
 .banner{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:10px;padding:12px 14px;margin:12px 0}
@@ -236,7 +246,7 @@ body.typing #tabs{display:none}
    單一檔案、無外部相依。資料存在瀏覽器的 IndexedDB。
    結構說明見 README.md。
    ============================================================ */
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 
 const SUBJECTS = [
   { id:'ds',   name:'資料結構',   short:'資結', aliases:['資結','ds','datastructure','datastructures'] },
@@ -417,17 +427,35 @@ function searchConcepts(q) {
 }
 
 /* ---------- prompt for GPT ---------- */
-function buildPrompt() {
+const PROMPT_ROLE = '你是資工所考試（資料結構、演算法、計算機組織、作業系統、離散數學、線性代數）的筆記助理。';
+const PROMPT_CONCEPT_RULES = `判斷考點（每題 1 到 3 個）：
+- 優先從下面「既有考點清單」挑選，挑中的話名稱要一字不改照抄。
+- 清單裡真的沒有，才提出新考點：名稱要具體（例如「AVL 樹旋轉」而不是「樹」），並從「章節清單」挑一個章節放。
+照片上看得出出處（學校、年份）就寫，看不出來就留空。
+不要解題，也不要分析我錯在哪裡。`;
+const PROMPT_FIGURE_RULES = `轉成文字的規則：
+- 數學式用一般文字寫，例如 x^2、sqrt(n)、log2(n)、a_i、T(n) = 2T(n/2) + n，不要用 LaTeX。
+- 題目裡的圖、表格、矩陣，用 ASCII 或文字結構呈現，並用 [圖] 和 [/圖] 包起來，這兩個標記各自獨立一行。
+- 樹、鏈結串列、堆疊、表格、矩陣、時序表、真值表：用 ASCII 畫。
+- 圖論的圖：優先用邊的清單，一行一條邊，例如 A -> B (3)；無向邊寫 A - B (3)。
+- [圖] 裡的標籤只用英文、數字和符號，不要用中文（中文在等寬字體裡會讓圖歪掉）。
+- 如果 ASCII 無法完整表達這張圖（例如邏輯電路、資料路徑、節點很多或邊交錯的圖、幾何圖形），「需要照片」寫「是」，題目裡仍盡量用文字描述；其他情況寫「否」。`;
+function promptLists() {
   const lines = [];
   for (const s of SUBJECTS) for (const ch of chaptersOf(s.id)) for (const c of conceptsOfChapter(ch.id)) lines.push(`${s.name}｜${ch.name}｜${c.name}`);
   const chapterLines = SUBJECTS.map(s => `${s.name}：${chaptersOf(s.id).map(c => c.name).join('、')}`);
-  return `你是資工所考試（資料結構、演算法、計算機組織、作業系統、離散數學、線性代數）的筆記助理。我會附上一張題目照片，請你：
-1. 把題目完整轉成文字。數學式可以用一般文字或 LaTeX。
-2. 判斷這題考的考點（1 到 3 個）。
-   - 優先從下面「既有考點清單」挑選，挑中的話名稱要一字不改照抄。
-   - 清單裡真的沒有，才提出新考點：名稱要具體（例如「AVL 樹旋轉」而不是「樹」），並從「章節清單」挑一個章節放。
-3. 照片上看得出出處（學校、年份）就寫，看不出來就留空。
-4. 不要解題，也不要分析我錯在哪裡。
+  return `既有考點清單：
+${lines.length ? lines.join('\n') : '（目前還沒有任何考點，請全部用「新增」）'}
+
+章節清單：
+${chapterLines.join('\n')}`;
+}
+function buildPrompt() {
+  return `${PROMPT_ROLE}我會附上一張題目照片，請把題目完整轉成文字，並判斷考點。
+
+${PROMPT_CONCEPT_RULES}
+
+${PROMPT_FIGURE_RULES}
 
 請只用以下格式回覆，並把整段放在一個程式碼區塊裡：
 ===題目===
@@ -437,13 +465,35 @@ function buildPrompt() {
 新增｜科目｜章節｜考點名稱
 ===出處===
 （例如：台大 112；看不出來就留空）
+===需要照片===
+否
 ===結束===
 
-既有考點清單：
-${lines.length ? lines.join('\n') : '（目前還沒有任何考點，請全部用「新增」）'}
+${promptLists()}`;
+}
+function buildBatchPrompt() {
+  return `${PROMPT_ROLE}我會附上多張題目照片。一張照片可能有好幾題，一題也可能跨好幾張。請依照片順序，把每一題完整轉成文字，並判斷考點。
 
-章節清單：
-${chapterLines.join('\n')}`;
+${PROMPT_CONCEPT_RULES}
+
+${PROMPT_FIGURE_RULES}
+
+請只用以下格式回覆，全部放在同一個程式碼區塊裡。每一題的「題目：」一定要放在那一題的最後面：
+===第1題===
+出處：台大 112
+需要照片：否
+考點：
+既有｜科目｜章節｜考點名稱
+新增｜科目｜章節｜考點名稱
+題目：
+（題目文字，可以有很多行，也可以包含 [圖] ... [/圖]）
+===第2題===
+（同樣的格式）
+===全部結束===
+
+如果內容太長、一次寫不完：在某一題完整寫完之後，寫一行 ===未完=== 就停下。我說「繼續」之後，從下一題接著寫，題號接續，一樣放在程式碼區塊裡；最後一段的結尾寫 ===全部結束===。
+
+${promptLists()}`;
 }
 function buildSummaryPrompt(c) {
   const { s, ch } = conceptPath(c);
@@ -457,32 +507,73 @@ function buildSummaryPrompt(c) {
 }
 
 /* ---------- parse GPT reply ---------- */
+const stripFences = text => String(text || '').replace(/\r/g, '').replace(/^[ \t]*```[^\n]*$/gm, '');
+function pushConceptLine(arr, line) {
+  const parts = line.trim().replace(/^([-*•]|\d+[.、)])\s*/, '').split(/[｜|]/).map(x => x.trim()).filter(Boolean);
+  if (!parts.length) return;
+  let kind = null;
+  if (/^(既有|新增|新)$/.test(parts[0])) kind = parts.shift().startsWith('既') ? 'existing' : 'new';
+  let subject = '', chapter = '', name = '';
+  if (parts.length >= 3) { subject = parts[0]; chapter = parts[1]; name = parts.slice(2).join(' '); }
+  else if (parts.length === 2) { subject = parts[0]; name = parts[1]; }
+  else name = parts[0];
+  name = name.replace(/^[「『"]|[」』"]$/g, '').trim();
+  if (name && !/^[（(].*[)）]$/.test(name)) arr.push({ kind, subject, chapter, name });
+}
+function cleanSource(s) {
+  s = String(s || '').split('\n').map(x => x.trim()).find(Boolean) || '';
+  if (/^[（(].*[)）]$/.test(s) || /^(無|留空|不明|未知|看不出來|-|—|n\/?a)$/i.test(s)) return '';
+  return s.replace(/[（(]看不出來就留空[)）]/, '').trim();
+}
+const yes = s => /^(是|要|需要|yes|y|true)/i.test(String(s || '').trim());
+function trimBlankLines(lines) {
+  while (lines.length && !lines[0].trim()) lines.shift();
+  while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+  return lines.map(l => l.replace(/\s+$/, '')).join('\n');
+}
+function cleanQuestionText(t) { return /^[（(]題目文字[^)）]*[)）]$/.test(t.trim()) ? '' : t; }
 function parseReply(text) {
-  const t = String(text || '').replace(/\r/g, '').replace(/```[^\n]*\n?/g, '');
-  const re = /=+\s*(題目|考點|出處|結束)\s*=+/g;
+  const t = stripFences(text);
+  const re = /=+[ \t]*(題目|考點|出處|需要照片|結束)[ \t]*=+/g;
   const marks = []; let m;
   while ((m = re.exec(t))) marks.push({ k: m[1], start: m.index, end: re.lastIndex });
   if (!marks.some(x => x.k === '考點')) return null;
   const sec = {};
-  marks.forEach((mk, i) => { const next = marks[i + 1]; if (!(mk.k in sec)) sec[mk.k] = t.slice(mk.end, next ? next.start : t.length).trim(); });
+  marks.forEach((mk, i) => { const next = marks[i + 1]; if (!(mk.k in sec)) sec[mk.k] = t.slice(mk.end, next ? next.start : t.length); });
   const concepts = [];
-  (sec['考點'] || '').split('\n').map(l => l.trim()).filter(Boolean).forEach(l => {
-    const parts = l.replace(/^([-*•]|\d+[.、)])\s*/, '').split(/[｜|]/).map(x => x.trim()).filter(Boolean);
-    if (!parts.length) return;
-    let kind = null;
-    if (/^(既有|新增|新)$/.test(parts[0])) kind = parts.shift().startsWith('既') ? 'existing' : 'new';
-    let subject = '', chapter = '', name = '';
-    if (parts.length >= 3) { subject = parts[0]; chapter = parts[1]; name = parts.slice(2).join(' '); }
-    else if (parts.length === 2) { subject = parts[0]; name = parts[1]; }
-    else name = parts[0];
-    name = name.replace(/^[「『"]|[」』"]$/g, '').trim();
-    if (name) concepts.push({ kind, subject, chapter, name });
+  (sec['考點'] || '').split('\n').forEach(l => { if (l.trim()) pushConceptLine(concepts, l); });
+  return { text: cleanQuestionText(trimBlankLines((sec['題目'] || '').split('\n'))), source: cleanSource(sec['出處'] || ''), needsPhoto: yes(sec['需要照片']), concepts };
+}
+// 批次回覆：===第N題=== 區塊，每塊內有 出處／需要照片／考點／題目（題目在最後）
+function parseBatchItem(body, n) {
+  const out = { n, source: '', needsPhoto: false, concepts: [], text: '' };
+  const textLines = []; let mode = null, mm;
+  for (const raw of body.split('\n')) {
+    const l = raw.trim();
+    if (mode === 'text') { textLines.push(raw); continue; }
+    if ((mm = l.match(/^題目\s*[:：]\s*(.*)$/))) { mode = 'text'; if (mm[1]) textLines.push(mm[1]); continue; }
+    if ((mm = l.match(/^出處\s*[:：]\s*(.*)$/))) { out.source = cleanSource(mm[1]); mode = null; continue; }
+    if ((mm = l.match(/^需要照片\s*[:：]\s*(.*)$/))) { out.needsPhoto = yes(mm[1]); mode = null; continue; }
+    if ((mm = l.match(/^考點\s*[:：]\s*(.*)$/))) { mode = 'concepts'; if (mm[1]) pushConceptLine(out.concepts, mm[1]); continue; }
+    if (mode === 'concepts' && l) pushConceptLine(out.concepts, l);
+  }
+  out.text = cleanQuestionText(trimBlankLines(textLines));
+  return out.text || out.concepts.length ? out : null;
+}
+function parseBatch(text) {
+  const t = stripFences(text);
+  const re = /^[ \t]*=+[ \t]*第[ \t]*(\d+)[ \t]*題[ \t]*=+[ \t]*$/gm;
+  const marks = []; let m;
+  while ((m = re.exec(t))) marks.push({ n: +m[1], start: m.index, end: re.lastIndex });
+  if (!marks.length) return null;
+  const endRe = /^[ \t]*=+[ \t]*(全部結束|未完|結束)[ \t]*=+[ \t]*$/m;
+  const items = [];
+  marks.forEach((mk, i) => {
+    const body = t.slice(mk.end, i + 1 < marks.length ? marks[i + 1].start : t.length).split(endRe)[0];
+    const it = parseBatchItem(body, mk.n); if (it) items.push(it);
   });
-  let source = (sec['出處'] || '').split('\n')[0].trim();
-  if (/^[（(].*[)）]$/.test(source) || /^(無|留空|不明|未知|看不出來|-|—|n\/?a)$/i.test(source)) source = '';
-  let qtext = sec['題目'] || '';
-  if (/^[（(]題目文字[)）]$/.test(qtext)) qtext = '';
-  return { text: qtext, source, concepts };
+  const unfinished = /=+[ \t]*未完[ \t]*=+/.test(t) && !/=+[ \t]*全部結束[ \t]*=+/.test(t);
+  return { items, unfinished };
 }
 
 /* ---------- classification cards (add flow) ---------- */
@@ -583,6 +674,22 @@ function openSheet(html, mount) {
 function closeSheet() { const root = $('#sheet-root'); root.classList.remove('open'); root.innerHTML = ''; document.body.classList.remove('noscroll'); }
 
 /* ---------- shared fragments ---------- */
+// 題目文字：[圖]…[/圖] 用等寬字體、不換行、可左右滑；其他部分照原樣換行
+function richText(t) {
+  t = String(t || '');
+  const re = /\[圖\][ \t]*\n?([\s\S]*?)(?:\n?[ \t]*\[\/圖\]|$)/g;
+  let html = '', last = 0, m, afterFig = false;
+  while ((m = re.exec(t))) {
+    let before = t.slice(last, m.index); if (afterFig) before = before.replace(/^\n/, '');
+    html += esc(before.replace(/\n$/, ''));
+    html += `<pre class="fig">${esc(m[1].replace(/\s+$/, ''))}</pre>`;
+    last = re.lastIndex; afterFig = true;
+  }
+  let rest = t.slice(last); if (afterFig) rest = rest.replace(/^\n/, '');
+  return html + esc(rest);
+}
+const plainSnippet = (t, n = 80) => String(t || '').replace(/\[圖\][\s\S]*?(\[\/圖\]|$)/g, '〔圖〕').replace(/\s+/g, ' ').trim().slice(0, n);
+const missingPhoto = p => !!p.needsPhoto && !p.photoIds.length;
 const sch = s => `<span class="sch" style="--sc:var(--s-${s.id})">${s.short}</span>`;
 function conceptRow(c, why) {
   const { s, ch } = conceptPath(c); const ps = problemsOf(c.id);
@@ -592,7 +699,7 @@ function conceptRow(c, why) {
 function problemRow(p, excludeConcept) {
   const st = statusOf(p), l = latest(p);
   const cs = p.conceptIds.filter(id => id !== excludeConcept).map(id => CO[id]).filter(Boolean);
-  return `<a class="prow" href="#/problem/${p.id}">${p.photoIds[0] ? `<img class="thumb" data-photo="${p.photoIds[0]}" alt="">` : `<span class="thumb empty">文</span>`}<span class="prow-main"><span class="prow-top"><span class="badge ${st}">${STATUS[st].label}</span>${p.source ? `<span class="muted small">${esc(p.source)}</span>` : ''}</span>${cs.length ? `<span class="prow-concepts">${excludeConcept ? '也考：' : ''}${cs.map(c => esc(c.name)).join('、')}</span>` : ''}${l && l.reason ? `<span class="prow-reason">${esc(l.reason)}</span>` : (p.text ? `<span class="prow-text">${esc(p.text.slice(0, 80))}</span>` : '')}</span></a>`;
+  return `<a class="prow" href="#/problem/${p.id}">${p.photoIds[0] ? `<img class="thumb" data-photo="${p.photoIds[0]}" alt="">` : `<span class="thumb empty">文</span>`}<span class="prow-main"><span class="prow-top"><span class="badge ${st}">${STATUS[st].label}</span>${p.source ? `<span class="muted small">${esc(p.source)}</span>` : ''}${missingPhoto(p) ? `<span class="t-unsure small">缺照片</span>` : ''}</span>${cs.length ? `<span class="prow-concepts">${excludeConcept ? '也考：' : ''}${cs.map(c => esc(c.name)).join('、')}</span>` : ''}${l && l.reason ? `<span class="prow-reason">${esc(l.reason)}</span>` : (p.text ? `<span class="prow-text">${esc(plainSnippet(p.text))}</span>` : '')}</span></a>`;
 }
 function conceptPills(p) {
   return `<div class="pconcepts">${p.conceptIds.map(id => CO[id]).filter(Boolean).map(c => { const { s } = conceptPath(c); return `<a class="cpill" href="#/concept/${c.id}" style="--sc:var(--s-${s.id})"><span>${s.short}</span>${esc(c.name)}</a>`; }).join('')}</div>`;
@@ -628,21 +735,21 @@ function attemptProblems(st) {
   if (r.length < 6 || TRIVIAL.test(r)) return '錯因寫具體一點：是哪一步、哪個觀念卡住';
   return '';
 }
-let AF = null; // { st, redraw, onChange }
+let AF = null; // { st, redraw, onChange, onOk }
 function attemptFormHTML(st) {
   return `<div class="status-pick">${['ok','unsure','wrong'].map(k => `<button type="button" class="st ${k} ${st.status === k ? 'on' : ''}" data-act="af-status" data-v="${k}" aria-pressed="${st.status === k}">${STATUS[k].label}</button>`).join('')}</div>
   ${st.status && st.status !== 'ok' ? `<span class="label">錯在哪一類？可以複選</span><div class="chips">${ERROR_TYPES.map(t => `<button type="button" class="chip ${st.errorTypes.includes(t) ? 'on' : ''}" data-act="af-type" data-v="${esc(t)}" aria-pressed="${st.errorTypes.includes(t)}">${t}</button>`).join('')}</div>
   <label class="label" for="af-reason">${st.status === 'wrong' ? '為什麼錯？寫具體卡在哪一步' : '哪裡不確定？寫具體哪一步沒把握'}</label>
   <textarea id="af-reason" placeholder="${st.status === 'wrong' ? '例如：以為 LR 旋轉是先右旋再左旋，順序搞反了' : '例如：不確定 TLB miss 時，要不要再加一次查 page table 的時間'}">${esc(st.reason)}</textarea>` : ''}`;
 }
-function mountAF(container, st, onChange) {
+function mountAF(container, st, onChange, onOk) {
   const draw = () => {
     container.innerHTML = attemptFormHTML(st);
     const ta = $('#af-reason', container);
     if (ta) ta.addEventListener('input', () => { st.reason = ta.value; onChange(); });
     onChange();
   };
-  AF = { st, redraw: draw, onChange };
+  AF = { st, redraw: draw, onChange, onOk };
   draw();
 }
 
@@ -744,12 +851,13 @@ const PF = { status: 'all', sid: '', school: '' };
 function renderProblems() {
   const schools = [...new Set(S.problems.map(p => sourceSchool(p.source)).filter(Boolean))].sort();
   let ps = S.problems.slice();
-  if (PF.status !== 'all') ps = ps.filter(p => statusOf(p) === PF.status);
+  if (PF.status === 'nophoto') ps = ps.filter(missingPhoto);
+  else if (PF.status !== 'all') ps = ps.filter(p => statusOf(p) === PF.status);
   if (PF.sid) ps = ps.filter(p => p.conceptIds.some(id => CO[id] && subjectOfConcept(CO[id]) === PF.sid));
   if (PF.school) ps = ps.filter(p => sourceSchool(p.source) === PF.school);
   ps.sort((a, b) => b.createdAt - a.createdAt);
   app.innerHTML = `<h1>瀏覽</h1>${browseSeg('list')}
-  <div class="chips">${[['all','全部'],['wrong','不會'],['unsure','不確定'],['ok','會']].map(([v, l]) => `<button type="button" class="chip ${PF.status === v ? 'on' : ''}" data-act="pf-status" data-v="${v}">${l}</button>`).join('')}</div>
+  <div class="chips">${[['all','全部'],['wrong','不會'],['unsure','不確定'],['ok','會'],['nophoto','缺照片']].map(([v, l]) => `<button type="button" class="chip ${PF.status === v ? 'on' : ''}" data-act="pf-status" data-v="${v}">${l}</button>`).join('')}</div>
   <div class="row2"><select id="pf-sid" aria-label="科目"><option value="">所有科目</option>${SUBJECTS.map(s => `<option value="${s.id}" ${PF.sid === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}</select>
   <select id="pf-school" aria-label="出處"><option value="">所有出處</option>${schools.map(x => `<option ${PF.school === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>
   <p class="muted small" style="margin-top:12px">${ps.length} 題</p>
@@ -789,7 +897,8 @@ function renderProblem(id) {
   app.innerHTML = `<div class="crumb"><a href="#/" data-act="back">返回</a></div>
   ${conceptPills(p)}
   ${p.photoIds.length ? `<div class="photos">${p.photoIds.map(pid => `<img data-photo="${pid}" data-act="view-photo" alt="題目照片">`).join('')}</div>` : ''}
-  ${p.text ? `<h2>題目</h2><div class="ptext">${esc(p.text)}</div>` : ''}
+  ${missingPhoto(p) ? `<div class="needphoto">這題的圖用文字表達不完整，建議補上照片。<div class="row"><button type="button" class="btn small" data-act="problem-edit" data-id="${id}">加照片</button></div></div>` : ''}
+  ${p.text ? `<h2>題目</h2><div class="ptext">${richText(p.text)}</div>` : ''}
   ${p.source ? `<p class="muted" style="margin-top:10px">出處：${esc(p.source)}</p>` : ''}
   <div class="sec-head"><h2>作答紀錄</h2><button type="button" class="btn small primary" data-act="attempt-add" data-id="${id}">再做一次</button></div>
   <ol class="attempts">${[...p.attempts].reverse().map(attemptHTML).join('')}</ol>
@@ -798,7 +907,7 @@ function renderProblem(id) {
 }
 
 /* ---------- page: add ---------- */
-const newDraft = () => ({ photos: [], reply: '', manual: '', cards: [], text: '', source: '', att: { status: null, errorTypes: [], reason: '' }, parseMsg: '' });
+const newDraft = () => ({ photos: [], reply: '', manual: '', cards: [], text: '', source: '', needsPhoto: false, att: { status: null, errorTypes: [], reason: '' }, parseMsg: '' });
 let A = newDraft();
 function sanitizeDraft(d) {
   if (!d || typeof d !== 'object') return newDraft();
@@ -810,11 +919,99 @@ function sanitizeDraft(d) {
 }
 let draftTimer;
 function saveDraft() { clearTimeout(draftTimer); draftTimer = setTimeout(() => dbPut('meta', { key: 'draft', value: A }).catch(() => {}), 400); }
+let addMode = (() => { try { return localStorage.getItem('kd-add-mode') || 'batch'; } catch (e) { return 'batch'; } })();
+
 function renderAdd() {
   if (mustInstall()) { app.innerHTML = `<h1>先加入主畫面</h1><p>為了不讓筆記遺失，新增題目只能在主畫面的 App 裡進行。</p>${installSteps()}<p class="muted">已經加過了？關掉這個 Safari 分頁，改從主畫面的圖示打開。</p>`; return; }
-  app.innerHTML = `<h1>新增題目</h1>
-  <section class="step"><h2><span class="n">1</span>讓 GPT 看題目</h2><p class="muted">複製提示詞，連同題目照片一起傳給 GPT。提示詞裡附了你目前所有的考點，GPT 會優先從裡面挑。</p><div class="row"><button type="button" class="btn primary" data-act="copy-prompt">複製提示詞</button><button type="button" class="btn ghost" data-act="show-prompt">看內容</button></div></section>
-  <section class="step"><h2><span class="n">2</span>題目照片</h2><div id="add-photos"></div></section>
+  app.innerHTML = `<h1>新增題目</h1><div class="seg"><button type="button" class="${addMode === 'batch' ? 'on' : ''}" data-act="add-mode" data-v="batch" aria-pressed="${addMode === 'batch'}">批次匯入</button><button type="button" class="${addMode === 'single' ? 'on' : ''}" data-act="add-mode" data-v="single" aria-pressed="${addMode === 'single'}">單題新增</button></div><div id="add-body"></div>`;
+  if (addMode === 'batch') renderBatch(); else renderSingle();
+}
+
+/* ----- shared: save one problem ----- */
+async function commitProblem({ cards, photos, text, source, att, needsPhoto }) {
+  const ids = [];
+  for (const card of cards) {
+    if (card.mode === 'existing') { const c = CO[card.conceptId]; await addAlias(c, card.input); ids.push(c.id); }
+    else ids.push(await createConcept({ name: card.newName, sid: card.newSid, chapterId: card.newChapterId, chapterName: card.newChapterName, alias: card.input }));
+  }
+  const conceptIds = [...new Set(ids)];
+  const photoIds = [];
+  for (const b of photos) { const id = uid(); await dbPut('photos', { id, blob: b }); photoIds.push(id); }
+  const t = now(), ok = att.status === 'ok';
+  const p = { id: uid(), conceptIds, photoIds, text: (text || '').trim(), source: (source || '').trim(), needsPhoto: !!needsPhoto, createdAt: t,
+    attempts: [{ at: t, status: att.status, errorTypes: ok ? [] : [...att.errorTypes], reason: ok ? '' : att.reason.trim(), via: 'add' }] };
+  S.problems.push(p); await dbPut('problems', p); reindex();
+  requestPersist();
+  return p;
+}
+
+/* ----- classification cards (shared by single and batch) ----- */
+function cardHTML(card, inBatch) {
+  const k = card.key;
+  if (card.mode === 'existing') {
+    const c = CO[card.conceptId]; const { s, ch } = conceptPath(c); const n = problemsOf(c.id).length;
+    const typed = card.input && norm(card.input) !== norm(c.name) ? `<span class="muted small">GPT 寫的是「${esc(card.input)}」，存檔後會記成這個考點的別名</span>` : '';
+    const head = inBatch ? '歸入既有考點' : card.confirmed ? '✓ 已確認' : '建議歸入既有考點';
+    return `<div class="ccard ${card.confirmed ? 'done' : ''}"><div class="ccard-head">${head}</div>
+    <div class="ccard-path">${sch(s)}${esc(ch.name)} › <b>${esc(c.name)}</b></div><div class="muted small">已有 ${n} 題</div>${typed}
+    <div class="row wrap">${card.confirmed ? `<button type="button" class="btn small" data-act="card-change" data-key="${k}">改放別處</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button>`
+      : `<button type="button" class="btn small primary" data-act="card-confirm" data-key="${k}">就放這裡</button><button type="button" class="btn small" data-act="card-change" data-key="${k}">改放別處</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button>`}</div></div>`;
+  }
+  if (card.confirmed) {
+    const s = SUBJ[card.newSid]; const chName = card.newChapterId ? CH[card.newChapterId].name : `${card.newChapterName}（新章節）`;
+    const cands = inBatch ? (card.candidates || []).map(id => CO[id]).filter(Boolean).slice(0, 3) : [];
+    return `<div class="ccard done"><div class="ccard-head">${inBatch ? '新考點，存檔時建立' : '✓ 存檔時建立新考點'}</div><div class="ccard-path">${sch(s)}${esc(chName)} › <b>${esc(card.newName)}</b></div>
+    ${cands.length ? `<span class="label">還是其實是這些既有考點？</span><div class="chips">${cands.map(c => `<button type="button" class="chip" data-act="card-use" data-key="${k}" data-id="${c.id}">${conceptPath(c).s.short}｜${esc(c.name)}</button>`).join('')}</div>` : ''}
+    <div class="row wrap"><button type="button" class="btn small" data-act="card-unconfirm" data-key="${k}">修改</button><button type="button" class="btn small" data-act="card-change" data-key="${k}">改放別處</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button></div></div>`;
+  }
+  const cands = (card.candidates || []).map(id => CO[id]).filter(Boolean).slice(0, 3);
+  return `<div class="ccard"><div class="ccard-head">這是新考點，建議建立在：</div>
+  <label class="label" for="nn-${k}">考點名稱</label><input id="nn-${k}" data-card="${k}" data-f="newName" value="${esc(card.newName)}">
+  <div class="row2"><div><label class="label" for="ns-${k}">科目</label><select id="ns-${k}" data-card="${k}" data-f="newSid">${subjectOptions(card.newSid)}</select></div>
+  <div><label class="label" for="nc-${k}">章節</label><select id="nc-${k}" data-card="${k}" data-f="newChapterId">${chapterOptions(card.newSid, card.newChapterId, card.newChapterName)}</select></div></div>
+  ${cands.length ? `<span class="label">還是其實是這些既有考點？</span><div class="chips">${cands.map(c => `<button type="button" class="chip" data-act="card-use" data-key="${k}" data-id="${c.id}">${conceptPath(c).s.short}｜${esc(c.name)}</button>`).join('')}</div>` : ''}
+  <div class="row wrap"><button type="button" class="btn small primary" data-act="card-confirm" data-key="${k}" ${cardReadyNew(card) ? '' : 'disabled'}>建立並確認</button><button type="button" class="btn small" data-act="card-change" data-key="${k}">從所有考點挑</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button></div></div>`;
+}
+function cardCtx(k) {
+  let card = A.cards.find(c => c.key === k); if (card) return { card, kind: 'single' };
+  const it = B.items[0]; card = it && (it.cards || []).find(c => c.key === k);
+  return card ? { card, kind: 'batch' } : { card: null, kind: null };
+}
+function refreshCards(kind) { if (kind === 'batch') { renderBatchCards(); saveBatch(); } else { renderAddCards(); saveDraft(); } }
+function removeCard(k) {
+  const { kind } = cardCtx(k);
+  if (kind === 'batch') B.items[0].cards = B.items[0].cards.filter(c => c.key !== k); else A.cards = A.cards.filter(c => c.key !== k);
+  refreshCards(kind);
+}
+function onCardInput(e) {
+  const t = e.target; if (!t.dataset.card || t.dataset.f !== 'newName') return;
+  const { card, kind } = cardCtx(t.dataset.card); if (!card) return;
+  card.newName = t.value;
+  const btn = t.closest('.ccard').querySelector('[data-act="card-confirm"]'); if (btn) btn.disabled = !cardReadyNew(card);
+  if (kind === 'batch') saveBatch(); else saveDraft();
+}
+function onCardChange(e) {
+  const t = e.target; if (!t.dataset.card) return;
+  const { card, kind } = cardCtx(t.dataset.card); if (!card) return;
+  if (t.dataset.f === 'newSid') { card.newSid = t.value; card.newChapterId = ''; card.newChapterName = ''; }
+  if (t.dataset.f === 'newChapterId') {
+    if (t.value === '__ask') { const n = prompt('新章節的名稱'); if (n && n.trim()) { card.newChapterId = ''; card.newChapterName = n.trim(); } }
+    else if (t.value === '__new') {}
+    else { card.newChapterId = t.value; card.newChapterName = ''; }
+  }
+  refreshCards(kind);
+}
+function pickToCard(card, r) {
+  if (r.type === 'existing') Object.assign(card, { mode: 'existing', conceptId: r.id, confirmed: true });
+  else Object.assign(card, { mode: 'new', newName: r.name, newSid: r.sid, newChapterId: r.chapterId || '', newChapterName: r.chapterName || '', confirmed: true });
+  return card;
+}
+
+/* ----- single question ----- */
+function renderSingle() {
+  const body = $('#add-body');
+  body.innerHTML = `<section class="step"><h2><span class="n">1</span>讓 GPT 看題目</h2><p class="muted">複製提示詞，連同題目照片一起傳給 GPT。提示詞裡附了你目前所有的考點，GPT 會優先從裡面挑。</p><div class="row"><button type="button" class="btn primary" data-act="copy-prompt">複製提示詞</button><button type="button" class="btn ghost" data-act="show-prompt">看內容</button></div></section>
+  <section class="step"><h2><span class="n">2</span>題目照片</h2><p class="muted small">題目沒有圖的話可以不放，存題目文字就好。</p><div id="add-photos"></div></section>
   <section class="step"><h2><span class="n">3</span>貼上 GPT 的回覆</h2><textarea id="add-reply" placeholder="把 GPT 回覆的整段內容貼在這裡">${esc(A.reply)}</textarea><div class="row"><button type="button" class="btn" data-act="parse-reply">讀取回覆</button></div><p id="parse-msg" class="hint">${esc(A.parseMsg)}</p>
     <details class="manual" ${A.manual ? 'open' : ''}><summary>不透過 GPT，直接輸入考點</summary><div class="row"><input id="add-manual" placeholder="例如：AVL 旋轉" value="${esc(A.manual)}" enterkeyhint="done"><button type="button" class="btn" data-act="manual-add">加入</button></div></details></section>
   <section class="step"><h2><span class="n">4</span>確認考點歸類</h2><div id="add-cards"></div></section>
@@ -846,51 +1043,10 @@ function renderAddPhotos() {
     renderAddPhotos(); saveDraft(); updateMissing();
   });
 }
-function cardHTML(card) {
-  const k = card.key;
-  if (card.mode === 'existing') {
-    const c = CO[card.conceptId]; const { s, ch } = conceptPath(c); const n = problemsOf(c.id).length;
-    const typed = card.input && norm(card.input) !== norm(c.name) ? `<span class="muted small">GPT 寫的是「${esc(card.input)}」，存檔後會記成這個考點的別名</span>` : '';
-    return `<div class="ccard ${card.confirmed ? 'done' : ''}"><div class="ccard-head">${card.confirmed ? '✓ 已確認' : '建議歸入既有考點'}</div>
-    <div class="ccard-path">${sch(s)}${esc(ch.name)} › <b>${esc(c.name)}</b></div><div class="muted small">已有 ${n} 題</div>${typed}
-    <div class="row wrap">${card.confirmed ? `<button type="button" class="btn small" data-act="card-change" data-key="${k}">改放別處</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button>`
-      : `<button type="button" class="btn small primary" data-act="card-confirm" data-key="${k}">就放這裡</button><button type="button" class="btn small" data-act="card-change" data-key="${k}">改放別處</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button>`}</div></div>`;
-  }
-  if (card.confirmed) {
-    const s = SUBJ[card.newSid]; const chName = card.newChapterId ? CH[card.newChapterId].name : `${card.newChapterName}（新章節）`;
-    return `<div class="ccard done"><div class="ccard-head">✓ 存檔時建立新考點</div><div class="ccard-path">${sch(s)}${esc(chName)} › <b>${esc(card.newName)}</b></div>
-    <div class="row wrap"><button type="button" class="btn small" data-act="card-unconfirm" data-key="${k}">修改</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button></div></div>`;
-  }
-  const cands = (card.candidates || []).map(id => CO[id]).filter(Boolean).slice(0, 3);
-  return `<div class="ccard"><div class="ccard-head">這是新考點，建議建立在：</div>
-  <label class="label" for="nn-${k}">考點名稱</label><input id="nn-${k}" data-card="${k}" data-f="newName" value="${esc(card.newName)}">
-  <div class="row2"><div><label class="label" for="ns-${k}">科目</label><select id="ns-${k}" data-card="${k}" data-f="newSid">${subjectOptions(card.newSid)}</select></div>
-  <div><label class="label" for="nc-${k}">章節</label><select id="nc-${k}" data-card="${k}" data-f="newChapterId">${chapterOptions(card.newSid, card.newChapterId, card.newChapterName)}</select></div></div>
-  ${cands.length ? `<span class="label">還是其實是這些既有考點？</span><div class="chips">${cands.map(c => `<button type="button" class="chip" data-act="card-use" data-key="${k}" data-id="${c.id}">${conceptPath(c).s.short}｜${esc(c.name)}</button>`).join('')}</div>` : ''}
-  <div class="row wrap"><button type="button" class="btn small primary" data-act="card-confirm" data-key="${k}" ${cardReadyNew(card) ? '' : 'disabled'}>建立並確認</button><button type="button" class="btn small" data-act="card-change" data-key="${k}">從所有考點挑</button><button type="button" class="btn ghost small danger" data-act="card-remove" data-key="${k}">移除</button></div></div>`;
-}
 function renderAddCards() {
   const el = $('#add-cards'); if (!el) return;
-  el.innerHTML = A.cards.length ? A.cards.map(cardHTML).join('') : `<p class="muted">讀取 GPT 的回覆，或直接輸入考點之後，會在這裡請你確認要歸到哪裡。</p>`;
+  el.innerHTML = A.cards.length ? A.cards.map(c => cardHTML(c, false)).join('') : `<p class="muted">讀取 GPT 的回覆，或直接輸入考點之後，會在這裡請你確認要歸到哪裡。</p>`;
   updateMissing();
-}
-const findCard = k => A.cards.find(c => c.key === k);
-function onCardInput(e) {
-  const t = e.target; if (!t.dataset.card || t.dataset.f !== 'newName') return;
-  const card = findCard(t.dataset.card); card.newName = t.value;
-  const btn = t.closest('.ccard').querySelector('[data-act="card-confirm"]'); if (btn) btn.disabled = !cardReadyNew(card);
-  saveDraft();
-}
-function onCardChange(e) {
-  const t = e.target; if (!t.dataset.card) return;
-  const card = findCard(t.dataset.card);
-  if (t.dataset.f === 'newSid') { card.newSid = t.value; card.newChapterId = ''; card.newChapterName = ''; }
-  if (t.dataset.f === 'newChapterId') {
-    if (t.value === '__ask') { const n = prompt('新章節的名稱'); if (n && n.trim()) { card.newChapterId = ''; card.newChapterName = n.trim(); } }
-    else if (t.value === '__new') {}
-    else { card.newChapterId = t.value; card.newChapterName = ''; }
-  }
-  renderAddCards(); saveDraft();
 }
 function doParse(fromPaste) {
   const r = parseReply(A.reply);
@@ -903,8 +1059,10 @@ function doParse(fromPaste) {
   }
   if (r.text) { A.text = r.text; const el = $('#add-text'); if (el) el.value = r.text; }
   if (r.source) { A.source = r.source; const el = $('#add-source'); if (el) el.value = r.source; }
+  A.needsPhoto = r.needsPhoto;
   A.cards = A.cards.filter(c => c.from === 'manual').concat(r.concepts.map(x => makeCard(x, 'reply')));
-  A.parseMsg = r.concepts.length ? `讀到 ${r.concepts.length} 個考點，請在下方確認歸類。` : '回覆裡沒有讀到考點，請用下方的「直接輸入考點」補上。';
+  A.parseMsg = (r.concepts.length ? `讀到 ${r.concepts.length} 個考點，請在下方確認歸類。` : '回覆裡沒有讀到考點，請用下方的「直接輸入考點」補上。')
+    + (r.needsPhoto && !A.photos.length ? '這題的圖用文字表達不完整，記得在第 2 步附上照片。' : '');
   if (msg) { msg.textContent = A.parseMsg; msg.classList.toggle('err', !r.concepts.length); }
   renderAddCards(); saveDraft();
 }
@@ -925,24 +1083,151 @@ function updateMissing() {
 async function saveAdd() {
   if (addProblemsList().length) return;
   const btn = $('#save-add'); btn.disabled = true; btn.textContent = '存檔中…';
-  const ids = [];
-  for (const card of A.cards) {
-    if (card.mode === 'existing') { const c = CO[card.conceptId]; await addAlias(c, card.input); ids.push(c.id); }
-    else ids.push(await createConcept({ name: card.newName, sid: card.newSid, chapterId: card.newChapterId, chapterName: card.newChapterName, alias: card.input }));
-  }
-  const conceptIds = [...new Set(ids)];
-  const photoIds = [];
-  for (const b of A.photos) { const id = uid(); await dbPut('photos', { id, blob: b }); photoIds.push(id); }
-  const t = now(), ok = A.att.status === 'ok';
-  const p = { id: uid(), conceptIds, photoIds, text: A.text.trim(), source: A.source.trim(), createdAt: t,
-    attempts: [{ at: t, status: A.att.status, errorTypes: ok ? [] : [...A.att.errorTypes], reason: ok ? '' : A.att.reason.trim(), via: 'add' }] };
-  S.problems.push(p); await dbPut('problems', p); reindex();
+  const p = await commitProblem({ cards: A.cards, photos: A.photos, text: A.text, source: A.source, att: A.att, needsPhoto: A.needsPhoto });
   A = newDraft(); await dbDel('meta', 'draft').catch(() => {});
-  requestPersist();
-  const cs = conceptIds.map(id => CO[id]);
+  const cs = p.conceptIds.map(id => CO[id]);
   app.innerHTML = `<h1>存好了</h1><p class="lede">這題歸在：</p><div class="list">${cs.map(c => conceptRow(c)).join('')}</div>
   <button type="button" class="btn primary big" data-act="add-another">再新增一題</button>`;
   window.scrollTo(0, 0);
+}
+
+/* ----- batch import ----- */
+const newBatch = () => ({ items: [], done: 0, skipped: 0, wrong: 0, unsure: 0, unfinished: false, seen: [], msg: '', msgErr: false });
+let B = newBatch();
+function sanitizeBatch(b) {
+  if (!b || typeof b !== 'object') return newBatch();
+  const x = Object.assign(newBatch(), b);
+  x.items = (b.items || []).map(it => Object.assign({}, it, {
+    photos: (it.photos || []).filter(p => p instanceof Blob),
+    cards: it.cards ? it.cards.filter(c => c.mode === 'new' || CO[c.conceptId]) : null,
+    att: Object.assign({ status: null, errorTypes: [], reason: '' }, it.att || {}),
+  }));
+  return x;
+}
+let batchTimer;
+function saveBatch() { clearTimeout(batchTimer); batchTimer = setTimeout(() => dbPut('meta', { key: 'batch', value: B }).catch(() => {}), 300); }
+const itemKey = it => `${it.n}|${norm(it.text).slice(0, 40)}`;
+function addBatchText(text) {
+  let r = parseBatch(text);
+  if (!r) {
+    const one = parseReply(text);
+    if (one && (one.concepts.length || one.text)) r = { items: [Object.assign({ n: 1 }, one)], unfinished: false };
+  }
+  if (!r || !r.items.length) {
+    B.msg = '讀不懂這段回覆。請確認貼上的是 GPT 的完整回覆，要有「===第1題===」這樣的分段。'; B.msgErr = true; saveBatch(); return 0;
+  }
+  let added = 0, dup = 0;
+  for (const it of r.items) {
+    const k = itemKey(it);
+    if (B.seen.includes(k) || B.items.some(x => itemKey(x) === k)) { dup++; continue; }
+    B.items.push({ id: uid(), n: it.n, text: it.text, source: it.source, needsPhoto: it.needsPhoto, concepts: it.concepts, photos: [], cards: null, att: { status: null, errorTypes: [], reason: '' } });
+    added++;
+  }
+  B.unfinished = r.unfinished;
+  B.msg = `讀到 ${added} 題${dup ? `（另有 ${dup} 題之前貼過，已略過）` : ''}。${r.unfinished ? 'GPT 還沒寫完：回 GPT 說「繼續」，再把下一段貼進來。' : ''}`;
+  B.msgErr = !added;
+  saveBatch(); return added;
+}
+function ingest(text) {
+  if (!String(text || '').trim()) { toast('沒有內容可以讀取'); return; }
+  const added = addBatchText(text);
+  renderBatch();
+  if (added) { window.scrollTo(0, 0); toast(B.msg.split('。')[0]); }
+}
+function pasteControlsHTML(append) {
+  return `<div class="row wrap"><button type="button" class="btn ${append ? '' : 'primary'}" data-act="bq-paste">${append ? '貼上下一段' : '貼上回覆'}</button><label class="btn filebtn">從 .txt 檔匯入<input type="file" accept=".txt,.md,text/plain" id="bq-file"></label></div>
+  <details id="bq-manual"><summary>按鈕沒反應？改用手動貼上</summary><textarea id="bq-text" placeholder="長按這裡，貼上 GPT 的回覆"></textarea><div class="row"><button type="button" class="btn" data-act="bq-read">讀取</button></div></details>
+  <p class="hint ${B.msgErr ? 'err' : ''}" id="bq-msg">${esc(B.msg)}</p>`;
+}
+function bindPasteControls() {
+  const f = $('#bq-file');
+  if (f) f.onchange = async e => { const file = e.target.files[0]; e.target.value = ''; if (file) ingest(await file.text()); };
+  const ta = $('#bq-text');
+  if (ta) ta.addEventListener('paste', () => setTimeout(() => { if (ta.value.trim()) ingest(ta.value); }, 0));
+}
+function renderBatch() {
+  const body = $('#add-body'); if (!body) return;
+  const total = B.done + B.skipped + B.items.length;
+  if (!B.items.length && !(B.done + B.skipped)) {
+    body.innerHTML = `<p class="lede">做完一回考古題後，一次把十幾題匯進來。</p>
+    <section class="step"><h2><span class="n">1</span>複製提示詞</h2><p class="muted">提示詞附了你目前所有的考點，GPT 會優先從裡面挑。</p><div class="row"><button type="button" class="btn primary" data-act="copy-batch-prompt">複製提示詞</button><button type="button" class="btn ghost" data-act="show-batch-prompt">看內容</button></div></section>
+    <section class="step"><h2><span class="n">2</span>傳給 GPT</h2><p class="muted">貼上提示詞，附上這一回所有的題目照片後送出。一則訊息最多 20 張，超過的話分成兩批。</p></section>
+    <section class="step"><h2><span class="n">3</span>貼回 GPT 的回覆</h2><p class="muted">點 GPT 回覆裡程式碼區塊右上角的「複製」，再按下面的按鈕。</p>${pasteControlsHTML(false)}</section>`;
+    bindPasteControls(); return;
+  }
+  if (!B.items.length) {
+    body.innerHTML = `<h2>這批完成了</h2><p class="lede summary-tally">存了 ${B.done} 題${B.skipped ? `、跳過 ${B.skipped} 題` : ''}${B.wrong + B.unsure ? `，其中 ${B.wrong} 題不會、${B.unsure} 題不確定` : ''}。</p>
+    ${B.unfinished ? `<div class="needphoto"><b>GPT 還沒寫完</b><p>回 GPT 說「繼續」，再把下一段貼進來。</p>${pasteControlsHTML(true)}</div>` : ''}
+    <button type="button" class="btn ${B.unfinished ? '' : 'primary'} big" data-act="bq-new">開始新的一批</button>`;
+    bindPasteControls(); return;
+  }
+  const it = B.items[0]; const pos = B.done + B.skipped + 1;
+  if (!it.cards) {
+    it.cards = it.concepts.map(x => { const c = makeCard(x, 'reply'); c.confirmed = c.mode === 'existing' ? true : !!cardReadyNew(c); return c; });
+    saveBatch();
+  } else it.cards = it.cards.filter(c => c.mode === 'new' || CO[c.conceptId]);
+  body.innerHTML = `<div class="bq-top"><span>第 ${pos} / ${total} 題</span>${it.source ? `<span>${esc(it.source)}</span>` : ''}</div><div class="progress"><i style="width:${(pos - 1) / total * 100}%"></i></div>
+  ${it.text ? `<div class="ptext">${richText(it.text)}</div>` : '<p class="muted">（沒有題目文字）</p>'}
+  <div class="row"><button type="button" class="btn ghost small" data-act="bq-edit-text">編輯題目文字或出處</button></div>
+  <div id="bq-photos"></div>
+  <h2>歸類</h2><div id="bq-cards"></div><button type="button" class="btn ghost small" data-act="bq-add-concept">再加一個考點</button>
+  <h2>這題你會嗎？</h2><div id="bq-att"></div>
+  <p class="missing" id="bq-miss"></p>
+  <button type="button" class="btn primary big" id="bq-save" data-act="bq-save">存檔，下一題</button>
+  <div class="row"><button type="button" class="btn ghost" data-act="bq-skip">跳過這題</button><button type="button" class="btn ghost danger" data-act="bq-discard">放棄這批</button></div>
+  ${B.unfinished ? `<div class="needphoto"><b>GPT 還沒寫完</b><p>回 GPT 說「繼續」，把下一段貼進來，會接在這批後面。</p>${pasteControlsHTML(true)}</div>` : `<details><summary>還有下一段要貼？</summary>${pasteControlsHTML(true)}</details>`}`;
+  $('#bq-cards').addEventListener('input', onCardInput);
+  $('#bq-cards').addEventListener('change', onCardChange);
+  bindPasteControls(); renderBatchPhotos(); renderBatchCards();
+  mountAF($('#bq-att'), it.att, () => { saveBatch(); updateBatchMissing(); }, async () => { if (!batchProblems(it).length) await saveBatchItem(); });
+}
+function renderBatchPhotos() {
+  const el = $('#bq-photos'); if (!el) return;
+  const it = B.items[0]; const need = it.needsPhoto && !it.photos.length;
+  el.innerHTML = `${need ? `<div class="needphoto">這題的圖用文字表達不完整，建議附上照片。<div class="row"><label class="btn small filebtn">加照片<input type="file" accept="image/*" multiple class="bq-photo-in"></label></div></div>` : ''}
+  ${it.photos.length ? `<div class="bq-photos">${it.photos.map((b, i) => `<div class="pg-item"><img src="${blobURL(b)}" alt="題目照片 ${i + 1}" data-act="bq-view" data-i="${i}"><button type="button" class="pg-x" data-act="bq-photo-remove" data-i="${i}" aria-label="移除這張照片">×</button></div>`).join('')}</div>` : ''}
+  ${!need ? `<label class="btn ghost small filebtn">${it.photos.length ? '再加一張照片' : '附上照片（選填）'}<input type="file" accept="image/*" multiple class="bq-photo-in"></label>` : ''}`;
+  $$('.bq-photo-in', el).forEach(inp => inp.onchange = async e => {
+    const files = [...e.target.files]; if (!files.length) return;
+    toast('正在處理照片…');
+    for (const f of files) it.photos.push(await compressImage(f));
+    renderBatchPhotos(); saveBatch(); updateBatchMissing();
+  });
+}
+function renderBatchCards() {
+  const el = $('#bq-cards'); if (!el) return;
+  const it = B.items[0];
+  el.innerHTML = it.cards.length ? it.cards.map(c => cardHTML(c, true)).join('') : '<p class="muted">GPT 沒有給這題的考點，請按「再加一個考點」。</p>';
+  updateBatchMissing();
+}
+function batchProblems(it) {
+  const m = [];
+  if (!it.text.trim() && !it.photos.length) m.push('題目文字或照片');
+  if (!it.cards || !it.cards.length) m.push('至少一個考點');
+  else if (it.cards.some(c => !c.confirmed)) m.push('確認新考點的名稱、科目和章節');
+  return m;
+}
+function updateBatchMissing() {
+  const el = $('#bq-miss'), btn = $('#bq-save'); if (!el) return;
+  const it = B.items[0]; const m = batchProblems(it); const e = attemptProblems(it.att);
+  if (e && it.att.status) m.push(e);
+  el.textContent = m.length ? `還差：${m.join('、')}` : '';
+  btn.disabled = m.length > 0 || !!e;
+}
+let batchSaving = false;
+async function saveBatchItem() {
+  const it = B.items[0];
+  if (batchSaving || !it || batchProblems(it).length || attemptProblems(it.att)) return;
+  batchSaving = true;
+  try {
+    const btn = $('#bq-save'); if (btn) { btn.disabled = true; btn.textContent = '存檔中…'; }
+    await commitProblem({ cards: it.cards, photos: it.photos, text: it.text, source: it.source, att: it.att, needsPhoto: it.needsPhoto });
+    B.seen.push(itemKey(it)); B.items.shift(); B.done++; B.msg = ''; B.msgErr = false;
+    if (it.att.status === 'wrong') B.wrong++; if (it.att.status === 'unsure') B.unsure++;
+    clearTimeout(batchTimer); await dbPut('meta', { key: 'batch', value: B }).catch(() => {});
+    toast(`已存檔（${B.done + B.skipped} / ${B.done + B.skipped + B.items.length}）`);
+    renderBatch(); window.scrollTo(0, 0);
+  } finally { batchSaving = false; }
 }
 
 /* ---------- concept picker sheet ---------- */
@@ -1029,7 +1314,7 @@ function renderSession() {
   app.innerHTML = `<div class="sess-top"><span>${esc(R.label)}</span><span>${R.i + 1} / ${R.ids.length}</span></div><div class="progress"><i style="width:${R.i / R.ids.length * 100}%"></i></div>
   ${conceptPills(p)}
   ${p.photoIds.length ? `<div class="photos">${p.photoIds.map(pid => `<img data-photo="${pid}" data-act="view-photo" alt="題目照片">`).join('')}</div>` : ''}
-  ${p.text && !p.photoIds.length ? `<div class="ptext">${esc(p.text)}</div>` : ''}
+  ${p.text ? (p.photoIds.length ? `<details><summary>題目文字</summary><div class="ptext">${richText(p.text)}</div></details>` : `<div class="ptext">${richText(p.text)}</div>`) : ''}
   ${!R.revealed ? `<p class="muted center" style="margin-top:16px">先在腦中或紙上把這題解一遍，想好再翻開。</p><button type="button" class="btn primary big" data-act="sess-reveal">翻開之前的紀錄</button>`
     : `<section class="reveal"><h2>之前的紀錄</h2><ol class="attempts">${[...p.attempts].reverse().map(attemptHTML).join('')}</ol>
       ${summaries.map(c => `<details><summary>${esc(c.name)} 的重點摘要</summary><div class="summary-body">${esc(c.summary)}</div></details>`).join('')}
@@ -1158,8 +1443,8 @@ function buildOverviewMD() {
         if (c.summary) L.push('', '重點摘要：', c.summary);
         L.push('');
         for (const p of problemsOf(c.id)) {
-          L.push(`- 題目 ${p.id.slice(0, 8)}${p.source ? `（${p.source}）` : ''}，目前狀態：${STATUS[statusOf(p)].label}${p.photoIds.length ? `，照片：${p.photoIds.map(x => `photos/${x}.jpg`).join('、')}` : ''}`);
-          if (p.text) L.push(`  - 題目文字：${p.text.replace(/\n/g, ' ')}`);
+          L.push(`- 題目 ${p.id.slice(0, 8)}${p.source ? `（${p.source}）` : ''}，目前狀態：${STATUS[statusOf(p)].label}${p.photoIds.length ? `，照片：${p.photoIds.map(x => `photos/${x}.jpg`).join('、')}` : ''}${missingPhoto(p) ? '，缺照片' : ''}`);
+          if (p.text) L.push('  - 題目文字：', '    ```', ...p.text.split('\n').map(x => '    ' + x), '    ```');
           p.attempts.forEach(a => L.push(`  - ${fmtFull(a.at)} ${STATUS[a.status].label}${(a.errorTypes || []).length ? `［${a.errorTypes.join('、')}］` : ''}${a.reason ? `：${a.reason.replace(/\n/g, ' ')}` : ''}`));
         }
         L.push('');
@@ -1213,7 +1498,7 @@ async function restoreFrom(file) {
     await dbPut('meta', { key: 'seeded', value: true });
     await dbPut('meta', { key: 'lastBackupAt', value: Date.parse(data.exportedAt) || now() });
     urlCache.forEach(u => URL.revokeObjectURL(u)); urlCache.clear();
-    await loadAll(); A = newDraft(); BK = null;
+    await loadAll(); A = newDraft(); B = newBatch(); BK = null;
     requestPersist();
     alert(`已還原 ${data.problems.length} 題。${missing ? `\n有 ${missing} 張照片在備份檔裡找不到。` : ''}`);
     currentRoute = null; go('#/');
@@ -1242,19 +1527,55 @@ const ACT = {
     renderAddCards(); saveDraft();
   },
   'photo-remove': (d) => { A.photos.splice(+d.i, 1); renderAddPhotos(); saveDraft(); updateMissing(); },
-  'card-confirm': (d) => { const c = findCard(d.key); if (c.mode === 'new' && !cardReadyNew(c)) { toast('請填好名稱、科目和章節'); return; } c.confirmed = true; renderAddCards(); saveDraft(); },
-  'card-unconfirm': (d) => { findCard(d.key).confirmed = false; renderAddCards(); saveDraft(); },
-  'card-remove': (d) => { A.cards = A.cards.filter(c => c.key !== d.key); renderAddCards(); saveDraft(); },
-  'card-use': (d) => { const c = findCard(d.key); Object.assign(c, { mode: 'existing', conceptId: d.id, confirmed: true }); renderAddCards(); saveDraft(); },
+  'card-confirm': (d) => { const { card, kind } = cardCtx(d.key); if (!card) return; if (card.mode === 'new' && !cardReadyNew(card)) { toast('請填好名稱、科目和章節'); return; } card.confirmed = true; refreshCards(kind); },
+  'card-unconfirm': (d) => { const { card, kind } = cardCtx(d.key); if (!card) return; card.confirmed = false; refreshCards(kind); },
+  'card-remove': (d) => removeCard(d.key),
+  'card-use': (d) => { const { card, kind } = cardCtx(d.key); if (!card) return; Object.assign(card, { mode: 'existing', conceptId: d.id, confirmed: true }); refreshCards(kind); },
   'card-change': (d) => {
-    const card = findCard(d.key);
-    openPicker({ title: '歸到哪個考點？', query: card.input || card.newName || '', defSid: card.newSid || '', onPick: r => {
-      if (r.type === 'existing') Object.assign(card, { mode: 'existing', conceptId: r.id, confirmed: true });
-      else Object.assign(card, { mode: 'new', newName: r.name, newSid: r.sid, newChapterId: r.chapterId, newChapterName: r.chapterName, confirmed: true });
-      renderAddCards(); saveDraft();
-    } });
+    const { card, kind } = cardCtx(d.key); if (!card) return;
+    const sid = card.mode === 'existing' ? subjectOfConcept(CO[card.conceptId]) : card.newSid;
+    openPicker({ title: '歸到哪個考點？', query: card.input || card.newName || '', defSid: sid || '', onPick: r => { pickToCard(card, r); refreshCards(kind); } });
   },
-  'af-status': (d) => { AF.st.status = d.v; AF.redraw(); },
+
+  'add-mode': (d) => { addMode = d.v; try { localStorage.setItem('kd-add-mode', d.v); } catch (e) {} renderAdd(); },
+  'copy-batch-prompt': async () => {
+    const text = buildBatchPrompt();
+    if (await copyText(text)) toast('已複製提示詞，貼到 GPT 並附上所有題目照片');
+    else ACT['show-batch-prompt']();
+  },
+  'show-batch-prompt': () => openSheet(`<h2>批次提示詞</h2><p class="muted small">如果複製按鈕沒反應，長按下面的文字選取全部後複製。</p><div class="prompt-pre">${esc(buildBatchPrompt())}</div>`),
+  'bq-paste': async () => {
+    let text = '';
+    try { text = await navigator.clipboard.readText(); }
+    catch (e) {
+      toast('無法讀取剪貼簿，請改用手動貼上');
+      const det = $('#bq-manual'); if (det) { det.open = true; const ta = $('#bq-text'); if (ta) ta.focus(); }
+      return;
+    }
+    if (!text.trim()) { toast('剪貼簿是空的，先在 GPT 的回覆點「複製」'); return; }
+    ingest(text);
+  },
+  'bq-read': () => ingest(($('#bq-text') || {}).value),
+  'bq-save': () => saveBatchItem(),
+  'bq-skip': () => { const it = B.items.shift(); if (!it) return; B.seen.push(itemKey(it)); B.skipped++; B.msg = ''; B.msgErr = false; saveBatch(); renderBatch(); window.scrollTo(0, 0); },
+  'bq-discard': async () => {
+    if (!confirm(`放棄這批剩下的 ${B.items.length} 題？已經存檔的題目不受影響。`)) return;
+    B = newBatch(); await dbDel('meta', 'batch').catch(() => {}); renderBatch();
+  },
+  'bq-new': async () => { B = newBatch(); await dbDel('meta', 'batch').catch(() => {}); renderBatch(); window.scrollTo(0, 0); },
+  'bq-view': (d) => { const b = B.items[0] && B.items[0].photos[+d.i]; if (b) openViewer(blobURL(b)); },
+  'bq-photo-remove': (d) => { const it = B.items[0]; it.photos.splice(+d.i, 1); renderBatchPhotos(); saveBatch(); updateBatchMissing(); },
+  'bq-edit-text': () => {
+    const it = B.items[0];
+    openSheet(`<h2>編輯題目</h2><label class="label" for="be-text">題目文字</label><textarea id="be-text" style="min-height:36vh;font-family:ui-monospace,Menlo,monospace;font-size:14px">${esc(it.text)}</textarea><p class="muted small">圖的部分用 [圖] 和 [/圖] 包起來，會用等寬字體顯示。</p><label class="label" for="be-src">出處</label><input id="be-src" value="${esc(it.source)}"><button type="button" class="btn primary big" id="be-save">儲存</button>`, () => {
+      $('#be-save').onclick = () => { it.text = $('#be-text').value.replace(/\s+$/, ''); it.source = $('#be-src').value.trim(); saveBatch(); closeSheet(); renderBatch(); };
+    });
+  },
+  'bq-add-concept': () => {
+    const it = B.items[0];
+    openPicker({ title: '加入哪個考點？', onPick: r => { it.cards.push(pickToCard({ key: uid(), from: 'manual', input: '' }, r)); saveBatch(); renderBatchCards(); } });
+  },
+  'af-status': async (d) => { AF.st.status = d.v; AF.redraw(); if (d.v === 'ok' && AF.onOk) await AF.onOk(); },
   'af-type': (d) => { const a = AF.st.errorTypes; const i = a.indexOf(d.v); if (i >= 0) a.splice(i, 1); else a.push(d.v); AF.redraw(); },
   'save-add': () => saveAdd(),
   'add-another': () => { currentRoute = null; renderAdd(); window.scrollTo(0, 0); },
@@ -1377,7 +1698,7 @@ const ACT = {
   'wipe': async () => {
     const v = prompt('這會刪除所有筆記和照片，而且無法復原。\n確定的話，請輸入「清除」兩個字。');
     if (v !== '清除') return;
-    await dbClearAll(); urlCache.clear(); await loadAll(); A = newDraft(); toast('已清除所有資料'); go('#/');
+    await dbClearAll(); urlCache.clear(); await loadAll(); A = newDraft(); B = newBatch(); toast('已清除所有資料'); go('#/');
   },
 };
 
@@ -1397,6 +1718,7 @@ async function init() {
     db = await openDB();
     await loadAll();
     A = sanitizeDraft(S.meta.draft);
+    B = sanitizeBatch(S.meta.batch);
   } catch (e) {
     app.innerHTML = `<h1>無法開啟筆記資料庫</h1><p>${esc(e && e.message || e)}</p><p class="muted">如果正在使用 Safari 的無痕瀏覽，請改用一般模式，或從主畫面的圖示開啟。</p>`;
     return;
